@@ -61,17 +61,45 @@ try {
     throw std::runtime_error("Invalid image: one of dimensions is 0!");
   }
 
-  auto texture_data = std::unique_ptr<gl::GLubyte[]>{
-    new gl::GLubyte[4 * result.width_ * result.height_]
+  /**
+   * @brief Tigtly-packed RGBA (8-bit per channel)
+   *
+   */
+  union PixelData
+  {
+    gl::GLubyte bytes[4];
+    struct
+    {
+      gl::GLubyte r, g, b, a;
+    };
   };
-  gl::GLubyte* gl_texture_data = texture_data.get();
+  static_assert(sizeof(PixelData) == 4, "PixelData must be tightly-packed");
 
-  for (int j = 0; j < result.width_ * result.height_; j++) {
-    gl_texture_data[j * 4 + 0] = image_data[j * 4 + 2];
-    gl_texture_data[j * 4 + 1] = image_data[j * 4 + 1];
-    gl_texture_data[j * 4 + 2] = image_data[j * 4 + 0];
-    gl_texture_data[j * 4 + 3] = image_data[j * 4 + 3];
+  auto texture_data = std::unique_ptr<PixelData[]>{
+    new PixelData[result.width_ * result.height_]
+  };
+
+  PixelData* gl_texture_data = texture_data.get();
+
+  /// Should invert texture's Y row (due to OpenGL's (0,0) being in bottom-down
+  /// corner)
+  bool invert_texture_v_axis = false;
+
+  for (int r = 0; r < result.height_; r++) {
+    for (int c = 0; c < result.width_; c++) {
+
+      const auto row = invert_texture_v_axis ? result.height_ - r - 1 : r;
+      const auto j_out = row * result.width_ + c;
+      const auto j_in = r * result.width_ + c;
+
+      // Assumes data stored as BGRA?
+      gl_texture_data[j_out].r = image_data[j_in * 4 + 2];
+      gl_texture_data[j_out].g = image_data[j_in * 4 + 1];
+      gl_texture_data[j_out].b = image_data[j_in * 4 + 0];
+      gl_texture_data[j_out].a = image_data[j_in * 4 + 3];
+    }
   }
+
   FreeImage_Unload(temp);
 
   // TODO: refactor to use RAII for OpenGL objects

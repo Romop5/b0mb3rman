@@ -129,10 +129,13 @@ private:
   }
 
 private:
-  alignas(sizeof(float) * 3) struct TileVertex
+  struct TileVertex
   {
     float x, y, z;
   };
+
+  static_assert(sizeof(TileVertex) == sizeof(float) * 3,
+                "TileVertex must be tightly-packed");
 
   struct Quad
   {
