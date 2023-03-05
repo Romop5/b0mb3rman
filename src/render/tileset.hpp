@@ -1,7 +1,7 @@
 #pragma once
 
 #include <filesystem>
-#include <render/texture.hpp>
+#include <render/resource.hpp>
 
 namespace render {
 /**

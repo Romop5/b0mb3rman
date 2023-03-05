@@ -1,5 +1,6 @@
 #include <utils/json.hpp>
 
+#include <render/loader.hpp>
 #include <render/tileset.hpp>
 
 using namespace render;

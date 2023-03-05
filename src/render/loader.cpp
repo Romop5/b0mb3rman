@@ -1,4 +1,11 @@
-#include <render/texture.hpp>
+#include <render/loader.hpp>
+
+#include <memory>
+#include <vector>
+
+#include <FreeImage.h>
+#include <glbinding/gl/gl.h>
+#include <spdlog/spdlog.h>
 
 static struct FreeImageInitializerGuard
 {
@@ -51,13 +58,12 @@ try {
   FIBITMAP* temp = imagen;
   imagen = FreeImage_ConvertTo32Bits(imagen);
 
-  Texture result;
-  result.width_ = FreeImage_GetWidth(imagen);
-  result.height_ = FreeImage_GetHeight(imagen);
+  const auto width_ = FreeImage_GetWidth(imagen);
+  const auto height_ = FreeImage_GetHeight(imagen);
 
   char* image_data = (char*)FreeImage_GetBits(imagen);
 
-  if (result.width_ == 0 || result.height_ == 0) {
+  if (width_ == 0 || height_ == 0) {
     throw std::runtime_error("Invalid image: one of dimensions is 0!");
   }
 
@@ -75,9 +81,8 @@ try {
   };
   static_assert(sizeof(PixelData) == 4, "PixelData must be tightly-packed");
 
-  auto texture_data = std::unique_ptr<PixelData[]>{
-    new PixelData[result.width_ * result.height_]
-  };
+  auto texture_data =
+    std::unique_ptr<PixelData[]>{ new PixelData[width_ * height_] };
 
   PixelData* gl_texture_data = texture_data.get();
 
@@ -85,12 +90,12 @@ try {
   /// corner)
   bool invert_texture_v_axis = false;
 
-  for (int r = 0; r < result.height_; r++) {
-    for (int c = 0; c < result.width_; c++) {
+  for (int r = 0; r < height_; r++) {
+    for (int c = 0; c < width_; c++) {
 
-      const auto row = invert_texture_v_axis ? result.height_ - r - 1 : r;
-      const auto j_out = row * result.width_ + c;
-      const auto j_in = r * result.width_ + c;
+      const auto row = invert_texture_v_axis ? height_ - r - 1 : r;
+      const auto j_out = row * width_ + c;
+      const auto j_in = r * width_ + c;
 
       // Assumes data stored as BGRA?
       gl_texture_data[j_out].r = image_data[j_in * 4 + 2];
@@ -102,15 +107,15 @@ try {
 
   FreeImage_Unload(temp);
 
-  // TODO: refactor to use RAII for OpenGL objects
-  gl::GLuint tex;
-  gl::glGenTextures(1, &tex);
+  auto result = create_texture();
+  gl::GLuint tex = result;
+
   gl::glBindTexture(gl::GL_TEXTURE_2D, tex);
   gl::glTexImage2D(gl::GL_TEXTURE_2D,
                    0,
                    gl::GL_RGBA,
-                   result.width_,
-                   result.height_,
+                   width_,
+                   height_,
                    0,
                    gl::GL_RGBA,
                    gl::GL_UNSIGNED_BYTE,
@@ -125,7 +130,6 @@ try {
   gl::glTexParameteri(
     gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MAG_FILTER, gl::GL_NEAREST);
 
-  result.id_ = tex;
   return result;
 } catch (const std::exception& e) {
   throw std::runtime_error(fmt::format("{}: {}", path.c_str(), e.what()));

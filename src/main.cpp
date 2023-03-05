@@ -58,7 +58,7 @@ main(int argc, const char* argv[])
       auto shaders = std::vector<render::Shader>{};
       shaders.emplace_back(std::move(vs_shader));
       shaders.emplace_back(std::move(fs_shader));
-      program = render::link_program(std::move(shaders));
+      program = render::link_program(shaders);
     }();
 
     render::TileRenderer renderer{ std::move(program) };

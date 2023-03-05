@@ -18,6 +18,7 @@ using Shader = render::Resource<gl::GL_SHADER>;
 using Program = render::Resource<gl::GL_PROGRAM>;
 using Buffer = render::Resource<gl::GL_BUFFER>;
 using VertexArray = render::Resource<gl::GL_VERTEX_ARRAY>;
+using Texture = render::Resource<gl::GL_TEXTURE>;
 
 /**
  * @brief Generic OpenGL Resource with ownership
@@ -50,6 +51,8 @@ public:
         gl::glDeleteBuffers(1, &resource_);
       } else if constexpr (_Type == gl::GL_VERTEX_ARRAY) {
         gl::glDeleteVertexArrays(1, &resource_);
+      } else if constexpr (_Type == gl::GL_TEXTURE) {
+        gl::glDeleteTextures(1, &resource_);
       } else {
         static_assert(_Type == gl::GL_PROGRAM,
                       "Unsupported type of render::Resource,"
@@ -68,6 +71,7 @@ public:
   friend Shader create_shader(gl::GLenum type);
   friend Buffer create_buffer();
   friend VertexArray create_vertex_array();
+  friend Texture create_texture();
 
 private:
   Resource(gl::GLuint id)
@@ -77,41 +81,21 @@ private:
 };
 
 [[nodiscard]] Program
-create_program()
-{
-  return Resource<gl::GL_PROGRAM>(gl::glCreateProgram());
-}
+create_program();
 
 [[nodiscard]] Shader
-create_shader(gl::GLenum type)
-{
-  return Resource<gl::GL_SHADER>(gl::glCreateShader(type));
-}
+create_shader(gl::GLenum type);
 
 [[nodiscard]] Buffer
-create_buffer()
-{
-  gl::GLuint id;
-  gl::glGenBuffers(1, &id);
-
-  return Resource<gl::GL_BUFFER>(id);
-}
+create_buffer();
 
 [[nodiscard]] VertexArray
-create_vertex_array()
-{
-  gl::GLuint id;
-  gl::glGenVertexArrays(1, &id);
+create_vertex_array();
 
-  return Resource<gl::GL_VERTEX_ARRAY>(id);
-}
+[[nodiscard]] Texture
+create_texture();
 
 [[nodiscard]] std::string
-enum_to_str(gl::GLenum enum_constant)
-{
-  std::stringstream ss;
-  ss << enum_constant;
-  return ss.str();
-}
+enum_to_str(gl::GLenum enum_constant);
 
 } // namespace render
