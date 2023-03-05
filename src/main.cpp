@@ -35,7 +35,8 @@ main(int argc, const char* argv[])
   }
 
   try {
-    auto app = bm::Application{};
+    auto app = std::make_shared<bm::Application>();
+    app->initialize();
 
     auto assets = std::filesystem::path{ "./assets" };
 
@@ -62,10 +63,14 @@ main(int argc, const char* argv[])
 
     render::TileRenderer renderer{ std::move(program) };
     renderer.add_map("test", tilemap);
-    app.run([&]() {
+
+    spdlog::info("Starting inifinite loop");
+    app->run([&]() {
       renderer.render();
       // app.stop();
     });
+
+    spdlog::info("Terminating ...");
   } catch (std::exception& e) {
     spdlog::critical("Application exception: {}", e.what());
     return 1;
