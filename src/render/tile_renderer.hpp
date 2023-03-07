@@ -21,17 +21,15 @@ class TileRenderer
 public:
   TileRenderer(Program&& program);
 
-  auto add_map([[maybe_unused]] const std::string& map_name,
-               std::shared_ptr<TiledMap> map) -> void;
+  auto bind_tileset(const Tileset& tileset) -> void;
+  auto draw_quad(float x1, float y1, float x2, float y2, unsigned tile_index)
+    -> void;
+  auto draw_quad(const glm::vec2& position,
+                 const glm::vec2& size,
+                 unsigned tile_index) -> void;
 
-  auto render() -> void;
-
-private:
   auto get_screen_size() const -> glm::vec2;
   auto set_projection_matrix(float min_x, float min_y, float max_x, float max_y)
-    -> void;
-
-  auto draw_quad(float x1, float y1, float x2, float y2, unsigned tile_index)
     -> void;
 
 private:
@@ -65,7 +63,6 @@ private:
 
   // TODO: camera
   // TODO: world definition
-  std::shared_ptr<TiledMap> map_;
 
   unsigned screen_width;
   unsigned screen_height;

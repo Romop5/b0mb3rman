@@ -10,12 +10,15 @@ find_package(glfw3 REQUIRED)
 find_package(freeimage REQUIRED)
 
 add_executable(b0mb3rman 
-        src/main.cpp
+        src/main.cpp 
+        src/application.cpp
+        src/game.cpp
         src/render/resource.cpp
         src/render/loader.cpp
         src/render/tileset.cpp
         src/render/tiled_map.cpp
         src/render/tile_renderer.cpp
+        src/render/tile_map_renderer.cpp
         src/render/tile_program.cpp
         src/utils/io.cpp
         src/utils/json.cpp

@@ -14,48 +14,6 @@ render::TileRenderer::TileRenderer(Program&& program)
 }
 
 auto
-render::TileRenderer::add_map([[maybe_unused]] const std::string& map_name,
-                              std::shared_ptr<TiledMap> map) -> void
-{
-  // TODO: use dictionary for maps
-  map_ = std::move(map);
-}
-
-auto
-render::TileRenderer::render() -> void
-{
-  assert(map_);
-
-  const auto& texture = map_->tileset_->texture_;
-  // program_.bind_tileset(map_->tileset_);
-
-  const auto screen_size = get_screen_size();
-
-  const auto tile_width = screen_size[0] / map_->count_x;
-  const auto tile_height = screen_size[1] / map_->count_y;
-
-  set_projection_matrix(0, 0, screen_size[0], screen_size[1]);
-
-  for (size_t y = 0; y < map_->count_y; y++) {
-    for (size_t x = 0; x < map_->count_x; x++) {
-      // Map (x,y) to <0, width*height)
-      const auto tile_position_index = y * map_->count_x + x;
-      const auto tile_texture_index =
-        map_->tile_indices_.at(tile_position_index);
-
-      const auto start_x = tile_width * x;
-      const auto start_y = tile_height * y;
-
-      draw_quad(start_x,
-                start_y,
-                start_x + tile_width,
-                start_y + tile_height,
-                tile_texture_index);
-    }
-  }
-}
-
-auto
 render::TileRenderer::get_screen_size() const -> glm::vec2
 {
   gl::GLfloat viewport[4];
@@ -80,32 +38,36 @@ render::TileRenderer::set_projection_matrix(float min_x,
 }
 
 auto
+render::TileRenderer::bind_tileset(const Tileset& tileset) -> void
+{
+  gl::glActiveTexture(gl::GL_TEXTURE0);
+  gl::glBindTexture(gl::GL_TEXTURE_2D, tileset.texture_);
+
+  {
+    auto location = gl::glGetUniformLocation(program_, "tile_texture");
+    gl::glUniform1ui(location, 0);
+  }
+
+  {
+    assert(tileset.tile_size_x_);
+    auto location = gl::glGetUniformLocation(program_, "tile_count_x");
+    gl::glUniform1ui(location, tileset.tile_size_x_);
+  }
+
+  {
+    assert(tileset.tile_size_y_);
+    auto location = gl::glGetUniformLocation(program_, "tile_count_y");
+    gl::glUniform1ui(location, tileset.tile_size_y_);
+  }
+}
+
+auto
 render::TileRenderer::draw_quad(float x1,
                                 float y1,
                                 float x2,
                                 float y2,
                                 unsigned tile_index) -> void
 {
-  {
-    gl::glActiveTexture(gl::GL_TEXTURE0);
-    gl::glBindTexture(gl::GL_TEXTURE_2D, map_->tileset_->texture_);
-
-    auto location = gl::glGetUniformLocation(program_, "tile_texture");
-    gl::glUniform1ui(location, 0);
-  }
-
-  {
-    assert(map_->tileset_->tile_size_x_);
-    auto location = gl::glGetUniformLocation(program_, "tile_count_x");
-    gl::glUniform1ui(location, map_->tileset_->tile_size_x_);
-  }
-
-  {
-    assert(map_->tileset_->tile_size_y_);
-    auto location = gl::glGetUniformLocation(program_, "tile_count_y");
-    gl::glUniform1ui(location, map_->tileset_->tile_size_y_);
-  }
-
   {
     auto location = gl::glGetUniformLocation(program_, "tile_id");
     gl::glUniform1ui(location, tile_index);
@@ -120,6 +82,15 @@ render::TileRenderer::draw_quad(float x1,
   }
 
   quad_.draw();
+}
+auto
+render::TileRenderer::draw_quad(const glm::vec2& position,
+                                const glm::vec2& size,
+                                unsigned tile_index) -> void
+{
+  const auto bottom_right = position + size;
+  draw_quad(
+    position[0], position[1], bottom_right[0], bottom_right[1], tile_index);
 }
 
 render::TileRenderer::Quad::Quad()
