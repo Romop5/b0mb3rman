@@ -1,5 +1,6 @@
-from conans import ConanFile, CMake
-from conan.tools.cmake import CMakeDeps
+from conans import ConanFile  # , CMake
+#from conan.tools.cmake import CMakeDeps
+from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 
 class b0berman(ConanFile):
@@ -23,12 +24,17 @@ class b0berman(ConanFile):
         self.copy("*.dylib*", dst="bin", src="lib")
 
     def generate(self):
+        tc = CMakeToolchain(self)
+        tc.generate()
         cmake = CMakeDeps(self)
         cmake.generate()
 
     def build(self):
         cmake = CMake(self)
+        cmake.configure()
         cmake.build()
+        #cmake = CMake(self)
+        # cmake.build()
         pass
 
         #cmake = CMake(self)

@@ -8,7 +8,6 @@
 using namespace bm;
 using namespace render;
 
-auto
 Game::Game()
   : event_distributor_{}
   , game_controller_{ event_distributor_ }

@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.16)
 project(b0mb3rman)
 
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
@@ -11,8 +12,8 @@ find_package(freeimage REQUIRED)
 
 add_executable(b0mb3rman 
         src/main.cpp 
-        src/application.cpp
-        src/game.cpp
+        src/bm/game.cpp
+        src/render/application.cpp
         src/render/resource.cpp
         src/render/loader.cpp
         src/render/tileset.cpp

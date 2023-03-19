@@ -39,17 +39,17 @@ public:
   GameController(EventDistributor& event_distributor)
     : event_distributor_{ event_distributor }
   {
-    event_distributor_.registry_listener<event::PlayerDied>(this);
+    event_distributor_.registry_listener<event::PlayerDied>(*this);
   }
 
-protected:
-  auto process(event::PlayerDied& event) -> void {}
+public:
+  auto handle(const event::PlayerDied& event) -> void {}
 
-  auto process(event::BombExploded& event) -> void {}
+  auto handle(const event::BombExploded& event) -> void {}
 
-  auto process(event::BombPlanted& event) -> void {}
+  auto handle(const event::BombPlanted& event) -> void {}
 
 private:
   EventDistributor& event_distributor_;
-
+};
 } // namespace bm

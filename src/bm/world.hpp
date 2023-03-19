@@ -1,8 +1,7 @@
 #pragma once
 
-#include <vector>
-
 #include <bm/entity.hpp>
+#include <vector>
 
 namespace bm {
 struct World

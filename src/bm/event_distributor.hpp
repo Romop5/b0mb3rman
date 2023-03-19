@@ -6,9 +6,8 @@
 #include <variant>
 #include <vector>
 
-#include <boost/heap/priority_queue.hpp>
-
 #include <bm/entity.hpp>
+#include <utils/extended_priority_queue.hpp>
 
 namespace bm {
 
@@ -53,8 +52,7 @@ public:
     const auto now = Clock::now();
     while (!event_queue_.empty() and event_queue_.top().planned_time_ <= now) {
       // Fetch top and pop (to allow enqueuing while processing current event)
-      const auto record = event_queue_.top();
-      event_queue_.pop();
+      const auto record = event_queue_.top_and_pop();
 
       const auto& type_index = record.event_->type_;
       if (listeners_.count(type_index) == 0) {
@@ -71,11 +69,11 @@ public:
   auto registry_listener(T& listener)
   {
     auto& listeners = listeners_[typeid(E)];
-    listeners.emplace_back([listener](const Record& record) {
-      // Note: type equivalence is verified in compile-time, therefore we don't
-      // use dynamic cast here
+    listeners.emplace_back([&listener](const Record& record) {
+      // Note: type equivalence is verified in compile-time, therefore we
+      // don't use dynamic cast here
       const auto& event = static_cast<EventModel<E>&>(*record.event_);
-      listener->handle(event);
+      listener.handle(event.data_);
     });
   }
 
@@ -90,7 +88,7 @@ private:
   struct EventModel : public EventConcept
   {
     explicit EventModel(T data)
-      : EventModel{ std::type_index(typeid(type_)) }
+      : EventConcept{ std::type_index(typeid(type_)) }
       , data_{ data }
     {
     }
@@ -136,11 +134,12 @@ private:
     };
   };
 
-  boost::heap::priority_queue<Record,
-                              boost::heap::compare<Record::ScheduleSorter>>
-    event_queue_;
+  utils::
+    extended_priority_queue<Record, std::vector<Record>, Record::ScheduleSorter>
+      event_queue_;
 
-  std::unordered_map<std::type_index, std::vector<std::function<void(Record)>>>
+  std::unordered_map<std::type_index,
+                     std::vector<std::function<void(const Record&)>>>
     listeners_;
 };
 

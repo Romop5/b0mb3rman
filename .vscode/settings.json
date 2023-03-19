@@ -71,6 +71,7 @@
         "variant": "cpp",
         "bit": "cpp",
         "strstream": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "resourcecpp": "cpp"
     }
 }
