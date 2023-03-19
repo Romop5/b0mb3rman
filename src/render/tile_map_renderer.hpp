@@ -13,6 +13,8 @@ public:
   auto activate_map(const std::string& map_name);
   auto render() -> void;
 
+  auto get_tile_size() -> glm::vec2;
+
 private:
   TileRenderer& renderer_;
 

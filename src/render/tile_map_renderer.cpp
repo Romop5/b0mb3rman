@@ -4,7 +4,8 @@ using namespace render;
 
 TileMapRenderer::TileMapRenderer(TileRenderer& renderer)
   : renderer_{ renderer }
-{}
+{
+}
 
 auto
 TileMapRenderer::add_map([[maybe_unused]] const std::string& map_name,
@@ -16,7 +17,8 @@ TileMapRenderer::add_map([[maybe_unused]] const std::string& map_name,
 
 auto
 TileMapRenderer::activate_map(const std::string& map_name)
-{}
+{
+}
 
 auto
 TileMapRenderer::render() -> void
@@ -25,10 +27,9 @@ TileMapRenderer::render() -> void
 
   renderer_.bind_tileset(*map_->tileset_);
 
-  const auto screen_size = renderer_.get_screen_size();
-
-  const auto tile_width = screen_size[0] / map_->count_x;
-  const auto tile_height = screen_size[1] / map_->count_y;
+  const auto tile_size = get_tile_size();
+  const auto tile_width = tile_size[0];
+  const auto tile_height = tile_size[1];
 
   for (size_t y = 0; y < map_->count_y; y++) {
     for (size_t x = 0; x < map_->count_x; x++) {
@@ -47,4 +48,14 @@ TileMapRenderer::render() -> void
                           tile_texture_index);
     }
   }
+}
+
+auto
+TileMapRenderer::get_tile_size() -> glm::vec2
+{
+  const auto screen_size = renderer_.get_screen_size();
+
+  const auto tile_width = screen_size[0] / map_->count_x;
+  const auto tile_height = screen_size[1] / map_->count_y;
+  return glm::vec2(tile_width, tile_height);
 }

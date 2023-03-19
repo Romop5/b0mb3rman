@@ -2,14 +2,19 @@
 #include <filesystem>
 #include <string>
 
-#include <application.hpp>
+#include <bm/entity.hpp>
+#include <bm/event_distributor.hpp>
+#include <bm/game_controller.hpp>
+#include <bm/world.hpp>
+
 #include <nlohmann/json.hpp>
+#include <render/application.hpp>
 #include <render/tile_map_renderer.hpp>
 #include <render/tile_renderer.hpp>
 
 namespace bm {
 
-class Game : public Application
+class Game : public render::Application
 {
 public:
   struct Settings
@@ -24,6 +29,7 @@ public:
   };
 
 public:
+  Game();
   auto initialize(Settings settings) -> void;
 
 private:
@@ -37,7 +43,7 @@ private:
   std::optional<render::TileRenderer> tile_renderer_;
   std::optional<render::TileMapRenderer> tile_map_renderer_;
 
-  class Player
+  class Player : public Entity
   {
   public:
     auto update(const glm::vec2& movement)
@@ -48,11 +54,15 @@ private:
       if (origin_.y < 0)
         origin_.y = 0;
     }
-
-    glm::vec2 origin_{ 0.0, 0.0 };
-    glm::vec2 size_{ 50.0, 50.0 };
-
   } player_;
+
+  EventDistributor event_distributor_;
+
+  /// @brief Pool of dynamic entities
+  World world_;
+
+  /// @brief Manages game dynamics (update of entites & map)
+  GameController game_controller_;
 };
 
 } // namespace bm

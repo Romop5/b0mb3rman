@@ -6,9 +6,7 @@
 #include <spdlog/cfg/env.h>
 #include <spdlog/spdlog.h>
 
-#include <application.hpp>
-
-#include <game.hpp>
+#include <bm/game.hpp>
 
 enum ReturnCodes
 {

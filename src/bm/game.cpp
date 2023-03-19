@@ -1,4 +1,4 @@
-#include <game.hpp>
+#include <bm/game.hpp>
 
 #include <render/resource.hpp>
 #include <render/tile_program.hpp>
@@ -7,6 +7,13 @@
 
 using namespace bm;
 using namespace render;
+
+auto
+Game::Game()
+  : event_distributor_{}
+  , game_controller_{ event_distributor_ }
+{
+}
 
 auto
 Game::initialize(Settings settings) -> void
@@ -51,12 +58,15 @@ Game::on_render() -> void
 
   tile_map_renderer_->render();
 
-  tile_renderer_->draw_quad(player_.origin_, player_.size_, 10);
+  const auto tile_size = tile_map_renderer_->get_tile_size();
+  tile_renderer_->draw_quad(player_.origin_ * tile_size, tile_size, 10);
 }
 
 auto
 Game::on_key_callback(int key, int scancode, int action, int mods) -> void
 {
+  // const auto delta = 1 / 10.0f;
+  const auto delta = 1;
   auto movement = [&]() -> std::optional<glm::vec2> {
     glm::vec2 dir{ 0.0, 0.0 };
     switch (key) {
@@ -78,6 +88,7 @@ Game::on_key_callback(int key, int scancode, int action, int mods) -> void
       default:
         return {};
     }
+    dir *= delta;
     return dir;
   }();
 

@@ -1,9 +1,9 @@
-#include <application.hpp>
+#include <render/application.hpp>
 
 #include <glbinding/gl/gl.h>
 #include <glbinding/glbinding.h>
 
-using namespace bm;
+using namespace render;
 
 auto
 Application::initialize() -> void
@@ -78,7 +78,8 @@ Application::stop() -> void
 
 auto
 Application::on_render() -> void
-{}
+{
+}
 
 auto
 Application::on_key_callback(int key, int scancode, int action, int mods)

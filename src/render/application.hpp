@@ -3,8 +3,8 @@
 #include <atomic>
 #include <memory>
 
-//#include <spdlog/spdlog.h>
-//#include <vector>
+// #include <spdlog/spdlog.h>
+// #include <vector>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -14,7 +14,7 @@
 #include <utils/raii_helpers.hpp>
 #include <utils/type.hpp>
 
-namespace bm {
+namespace render {
 
 class Application : public std::enable_shared_from_this<Application>
 {
