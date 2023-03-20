@@ -9,10 +9,12 @@ find_package(lyra REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(freeimage REQUIRED)
+find_package(Boost REQUIRED)
 
 add_executable(b0mb3rman 
         src/main.cpp 
         src/bm/game.cpp
+        src/bm/world.cpp
         src/render/application.cpp
         src/render/resource.cpp
         src/render/loader.cpp
@@ -32,6 +34,7 @@ target_link_libraries(b0mb3rman PUBLIC
         glbinding::glbinding
         glbinding::glbinding-aux
         freeimage::freeimage
+        Boost::system
 )
 target_compile_features(b0mb3rman PRIVATE cxx_std_17)
 target_include_directories(b0mb3rman PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

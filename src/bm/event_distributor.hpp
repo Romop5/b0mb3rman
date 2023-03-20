@@ -6,6 +6,9 @@
 #include <variant>
 #include <vector>
 
+#include <boost/core/demangle.hpp>
+#include <spdlog/spdlog.h>
+
 #include <bm/entity.hpp>
 #include <utils/extended_priority_queue.hpp>
 
@@ -42,8 +45,8 @@ public:
   template<typename E>
   auto enqueue_event(E event, Timestamp planned_time = Clock::now()) -> void
   {
-    event_queue_.emplace(Record{
-      std::make_optional<EventModel<E>>(event), Clock::now(), planned_time });
+    event_queue_.emplace(std::move(Record{
+      std::make_unique<EventModel<E>>(event), Clock::now(), planned_time }));
   }
 
   /// @brief Process all ready events
@@ -56,7 +59,8 @@ public:
 
       const auto& type_index = record.event_->type_;
       if (listeners_.count(type_index) == 0) {
-        // TODO: trace ingored event in log
+        spdlog::warn("Missing handler for event with name:'{}'",
+                     boost::core::demangle(type_index.name()));
         continue;
       }
       for (const auto& listener : listeners_.at(type_index)) {
@@ -65,9 +69,13 @@ public:
     }
   }
 
-  template<typename E, typename T>
+  template<typename E, typename... Events, typename T>
   auto registry_listener(T& listener)
   {
+    if constexpr (sizeof...(Events) > 0) {
+      registry_listener<Events...>(std::forward<T&>(listener));
+    }
+
     auto& listeners = listeners_[typeid(E)];
     listeners.emplace_back([&listener](const Record& record) {
       // Note: type equivalence is verified in compile-time, therefore we
@@ -77,9 +85,23 @@ public:
     });
   }
 
+  /// @brief Remove all enqueued events
+  /// @return
+  auto clear() -> void
+  {
+    while (!event_queue_.empty()) {
+      event_queue_.pop();
+    }
+  }
+
 private:
   struct EventConcept
   {
+    EventConcept(std::type_index type)
+      : type_{ type }
+    {
+    }
+
     virtual ~EventConcept() = default;
     std::type_index type_;
   };
@@ -88,10 +110,11 @@ private:
   struct EventModel : public EventConcept
   {
     explicit EventModel(T data)
-      : EventConcept{ std::type_index(typeid(type_)) }
+      : EventConcept{ std::type_index(typeid(T)) }
       , data_{ data }
     {
     }
+
     T data_;
   };
 
@@ -102,6 +125,14 @@ private:
   struct Record
   {
     Record() = default;
+    Record(std::unique_ptr<EventConcept> event,
+           Timestamp enqued_time,
+           Timestamp planned_time)
+      : event_{ std::move(event) }
+      , enqued_time_{ enqued_time }
+      , planned_time_{ planned_time }
+    {
+    }
     Record(const Record&) = delete;
     Record(Record&& other)
     {

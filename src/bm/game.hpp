@@ -37,24 +37,13 @@ private:
   virtual auto on_key_callback(int key, int scancode, int action, int mods)
     -> void override;
 
+  auto start() -> void;
+
 private:
   Settings settings_;
 
   std::optional<render::TileRenderer> tile_renderer_;
   std::optional<render::TileMapRenderer> tile_map_renderer_;
-
-  class Player : public Entity
-  {
-  public:
-    auto update(const glm::vec2& movement)
-    {
-      origin_ += movement;
-      if (origin_.x < 0)
-        origin_.x = 0;
-      if (origin_.y < 0)
-        origin_.y = 0;
-    }
-  } player_;
 
   EventDistributor event_distributor_;
 

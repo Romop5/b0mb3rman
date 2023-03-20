@@ -10,7 +10,8 @@ using namespace render;
 
 Game::Game()
   : event_distributor_{}
-  , game_controller_{ event_distributor_ }
+  , world_{ event_distributor_ }
+  , game_controller_{ event_distributor_, world_ }
 {
 }
 
@@ -47,18 +48,32 @@ Game::initialize(Settings settings) -> void
   auto tilemap = render::TiledMap::load_map(assets / settings.tilemap_path_,
                                             std::move(tileset));
   tile_map_renderer_->add_map("default", tilemap);
+
+  start();
 }
 
 auto
 Game::on_render() -> void
 {
+  event_distributor_.dispatch();
+  world_.detect_collisions();
+
+  // Render the world
   const auto screen_size = tile_renderer_->get_screen_size();
   tile_renderer_->set_projection_matrix(0, 0, screen_size[0], screen_size[1]);
 
   tile_map_renderer_->render();
 
   const auto tile_size = tile_map_renderer_->get_tile_size();
-  tile_renderer_->draw_quad(player_.origin_ * tile_size, tile_size, 10);
+
+  for (auto& [id, entity] : world_) {
+    const auto origin = entity.aabb_.origin_;
+    const auto size = entity.aabb_.size_;
+    tile_renderer_->draw_quad(
+      origin * tile_size, size * tile_size, entity.tile_index_);
+  }
+
+  world_.delete_marked_entities();
 }
 
 auto
@@ -68,6 +83,8 @@ Game::on_key_callback(int key, int scancode, int action, int mods) -> void
   const auto delta = 1;
   auto movement = [&]() -> std::optional<glm::vec2> {
     glm::vec2 dir{ 0.0, 0.0 };
+    if (action == GLFW_RELEASE)
+      return dir;
     switch (key) {
       case GLFW_KEY_LEFT: {
         dir = { -1.0, 0.0 };
@@ -92,8 +109,25 @@ Game::on_key_callback(int key, int scancode, int action, int mods) -> void
   }();
 
   if (movement) {
-    player_.update(*movement);
+    event_distributor_.enqueue_event(bm::event::PlayerMoved{ *movement });
+  }
+
+  if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
+    event_distributor_.enqueue_event(bm::event::BombPlanted{});
+  }
+
+  if (key == GLFW_KEY_BACKSPACE && action == GLFW_PRESS) {
+    start();
   }
 
   Application::on_key_callback(key, scancode, action, mods);
+}
+
+auto
+Game::start() -> void
+{
+  world_.clear();
+  event_distributor_.clear();
+
+  event_distributor_.enqueue_event(event::GameStarted{});
 }

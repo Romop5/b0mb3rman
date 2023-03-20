@@ -18,7 +18,7 @@ enum ReturnCodes
 int
 main(int argc, const char* argv[])
 {
-  spdlog::set_level(spdlog::level::info);
+  spdlog::set_level(spdlog::level::debug);
   spdlog::cfg::load_env_levels();
 
   bm::Game::Settings settings;

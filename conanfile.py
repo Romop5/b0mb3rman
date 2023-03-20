@@ -13,7 +13,8 @@ class b0berman(ConanFile):
         "lyra/1.6.1",
         "spdlog/1.11.0",
         "freeimage/3.18.0",
-        "glm/0.9.9.8"
+        "glm/0.9.9.8",
+        "boost/1.81.0"
     ]
 
     generators = "CMakeDeps"

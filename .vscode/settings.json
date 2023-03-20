@@ -72,6 +72,7 @@
         "bit": "cpp",
         "strstream": "cpp",
         "*.ipp": "cpp",
-        "resourcecpp": "cpp"
+        "resourcecpp": "cpp",
+        "shared_mutex": "cpp"
     }
 }
