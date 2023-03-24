@@ -9,6 +9,7 @@
 
 #include <nlohmann/json.hpp>
 #include <render/application.hpp>
+#include <render/font.hpp>
 #include <render/tile_map_renderer.hpp>
 #include <render/tile_renderer.hpp>
 
@@ -44,6 +45,7 @@ private:
 
   std::optional<render::TileRenderer> tile_renderer_;
   std::optional<render::TileMapRenderer> tile_map_renderer_;
+  std::optional<render::Font> font_;
 
   EventDistributor event_distributor_;
 

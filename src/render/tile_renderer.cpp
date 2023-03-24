@@ -30,6 +30,7 @@ render::TileRenderer::set_projection_matrix(float min_x,
                                             float max_x,
                                             float max_y) -> void
 {
+  gl::glUseProgram(program_);
   auto matrix = glm::ortho(min_x, max_x, min_y, max_y);
   {
     auto location = gl::glGetUniformLocation(program_, "projection");
@@ -42,6 +43,7 @@ render::TileRenderer::bind_tileset(const Tileset& tileset) -> void
 {
   gl::glActiveTexture(gl::GL_TEXTURE0);
   gl::glBindTexture(gl::GL_TEXTURE_2D, tileset.texture_);
+  gl::glUseProgram(program_);
 
   {
     auto location = gl::glGetUniformLocation(program_, "tile_texture");
@@ -81,6 +83,7 @@ render::TileRenderer::draw_quad(float x1,
     gl::glUniform4fv(location, 1, glm::value_ptr(quad));
   }
 
+  gl::glUseProgram(program_);
   quad_.draw();
 }
 auto
@@ -126,6 +129,6 @@ auto
 render::TileRenderer::Quad::draw() -> void
 {
   gl::glBindVertexArray(vao_);
-  gl::glDrawArrays(gl::GL_TRIANGLE_STRIP, 0, 3 * 2);
+  gl::glDrawArrays(gl::GL_TRIANGLE_STRIP, 0, 4);
   gl::glBindVertexArray(0);
 }

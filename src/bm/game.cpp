@@ -18,7 +18,7 @@ Game::Game()
 auto
 Game::initialize(Settings settings) -> void
 {
-
+  spdlog::debug("Game::initialize()");
   Application::initialize();
 
   const auto& assets = settings.assets_directory_;
@@ -41,6 +41,9 @@ Game::initialize(Settings settings) -> void
 
   tile_renderer_ = render::TileRenderer{ std::move(program) };
   tile_map_renderer_.emplace(render::TileMapRenderer{ *tile_renderer_ });
+
+  // Create default font
+  font_.emplace("arial.ttf");
 
   // Load initial tile texture and map
   auto tileset = render::Tileset::load_tileset(assets / settings.tileset_name_);
@@ -73,6 +76,9 @@ Game::on_render() -> void
       origin * tile_size, size * tile_size, entity.tile_index_);
   }
 
+  font_->draw_text("ok lets go", glm::vec2(0, 0));
+  // font_->draw_text("ok", glm::vec2(100, 500));
+  // font_->draw_text("okokok", glm::vec2(100, 1000));
   world_.delete_marked_entities();
 }
 
@@ -126,6 +132,7 @@ Game::on_key_callback(int key, int scancode, int action, int mods) -> void
 auto
 Game::start() -> void
 {
+  spdlog::debug("Game::start()");
   world_.clear();
   event_distributor_.clear();
 

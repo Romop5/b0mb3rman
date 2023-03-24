@@ -19,4 +19,5 @@ load_shader(gl::GLenum type, const std::string& code) -> Shader;
 
 auto
 link_program(const std::vector<Shader>& shaders) -> Program;
+
 } // namespace render
