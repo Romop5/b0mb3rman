@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include <bm/game.hpp>
+#include <render/window.hpp>
 
 enum ReturnCodes
 {
@@ -18,7 +19,7 @@ enum ReturnCodes
 int
 main(int argc, const char* argv[])
 {
-  spdlog::set_level(spdlog::level::debug);
+  spdlog::set_level(spdlog::level::trace);
   spdlog::cfg::load_env_levels();
 
   bm::Game::Settings settings;
@@ -42,12 +43,14 @@ main(int argc, const char* argv[])
 
   // Initialize and run the game
   try {
-
-    auto app = std::make_shared<bm::Game>();
-    app->initialize(settings);
+    auto window = std::make_shared<render::Window>();
+    auto app = bm::Game{ *window, settings };
+    window->register_callbacks();
+    window->set_input_observer(app);
+    window->set_renderable_observer(app);
 
     spdlog::info("Starting inifinite loop");
-    app->run();
+    app.run();
     spdlog::info("Terminating ...");
 
   } catch (std::exception& e) {

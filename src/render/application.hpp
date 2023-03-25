@@ -3,12 +3,9 @@
 #include <atomic>
 #include <memory>
 
-// #include <spdlog/spdlog.h>
-// #include <vector>
-
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
+#include <render/interfaces/input_listener.hpp>
+#include <render/interfaces/renderable.hpp>
+#include <render/interfaces/renderable_observer.hpp>
 #include <utils/exceptions.hpp>
 #include <utils/manager.hpp>
 #include <utils/raii_helpers.hpp>
@@ -16,29 +13,32 @@
 
 namespace render {
 
-class Application : public std::enable_shared_from_this<Application>
+class Application
+  : public interfaces::IInputListener
+  , public interfaces::IRenderableObserver
+
 {
 public:
   class Settings
   {};
 
-  Application() = default;
-
-  auto initialize() -> void;
+  explicit Application(interfaces::IRenderable& renderable);
 
   auto run() -> void;
-
   auto stop() -> void;
 
   virtual auto on_render() -> void;
+
+  /* InputListener */
   virtual auto on_key_callback(int key, int scancode, int action, int mods)
-    -> void;
+    -> void override;
+
+  /* IRenderableObserver */
+  virtual auto on_viewport_change(float x, float y, float width, float height)
+    -> void override;
 
 private:
-  utils::RaiiAction glfw_delete_system_;
-  utils::RaiiOwnership<GLFWwindow> window_;
-  utils::ManagerRaiiHandle<Application> application_handler_;
-
+  interfaces::IRenderable& renderable_;
   std::atomic<bool> is_running_{ true };
 };
 

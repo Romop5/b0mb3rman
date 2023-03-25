@@ -7,21 +7,11 @@
 
 using namespace render;
 
-render::TileRenderer::TileRenderer(Program&& program)
-  : program_{ std::move(program) }
+render::TileRenderer::TileRenderer(const Viewport& viewport, Program&& program)
+  : viewport_{ viewport }
+  , program_{ std::move(program) }
 {
   gl::glUseProgram(program_);
-}
-
-auto
-render::TileRenderer::get_screen_size() const -> glm::vec2
-{
-  gl::GLfloat viewport[4];
-  gl::glGetFloatv(gl::GL_VIEWPORT, viewport);
-
-  const auto& screen_width = viewport[2];
-  const auto& screen_height = viewport[3];
-  return glm::vec2(screen_width, screen_height);
 }
 
 auto
@@ -36,6 +26,12 @@ render::TileRenderer::set_projection_matrix(float min_x,
     auto location = gl::glGetUniformLocation(program_, "projection");
     gl::glUniformMatrix4fv(location, 1, gl::GL_FALSE, glm::value_ptr(matrix));
   }
+}
+
+auto
+render::TileRenderer::get_viewport() const -> const Viewport&
+{
+  return viewport_;
 }
 
 auto

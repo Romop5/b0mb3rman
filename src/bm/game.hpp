@@ -12,6 +12,7 @@
 #include <render/font.hpp>
 #include <render/tile_map_renderer.hpp>
 #include <render/tile_renderer.hpp>
+#include <render/viewport.hpp>
 
 namespace bm {
 
@@ -30,18 +31,20 @@ public:
   };
 
 public:
-  Game();
-  auto initialize(Settings settings) -> void;
+  explicit Game(render::interfaces::IRenderable& renderable, Settings settings);
 
 private:
   virtual auto on_render() -> void override;
   virtual auto on_key_callback(int key, int scancode, int action, int mods)
     -> void override;
+  virtual auto on_viewport_change(float x, float y, float width, float height)
+    -> void;
 
   auto start() -> void;
 
 private:
   Settings settings_;
+  render::Viewport viewport_;
 
   std::optional<render::TileRenderer> tile_renderer_;
   std::optional<render::TileMapRenderer> tile_map_renderer_;

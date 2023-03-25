@@ -25,6 +25,7 @@ add_executable(b0mb3rman
         src/render/tile_map_renderer.cpp
         src/render/tile_program.cpp
         src/render/font.cpp
+        src/render/window.cpp
         src/utils/io.cpp
         src/utils/json.cpp
 )
@@ -37,7 +38,7 @@ target_link_libraries(b0mb3rman PUBLIC
         glbinding::glbinding-aux
         freeimage::freeimage
         Boost::system
-        Freetype::Freetype
+        freetype
 )
 target_compile_features(b0mb3rman PRIVATE cxx_std_17)
 target_include_directories(b0mb3rman PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

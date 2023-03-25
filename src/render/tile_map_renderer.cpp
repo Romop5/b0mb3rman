@@ -53,7 +53,7 @@ TileMapRenderer::render() -> void
 auto
 TileMapRenderer::get_tile_size() -> glm::vec2
 {
-  const auto screen_size = renderer_.get_screen_size();
+  const auto screen_size = renderer_.get_viewport().get_size();
 
   const auto tile_width = screen_size[0] / map_->count_x;
   const auto tile_height = screen_size[1] / map_->count_y;

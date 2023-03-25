@@ -5,24 +5,16 @@
 #include <utils/io.hpp>
 #include <utils/json.hpp>
 
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
 using namespace bm;
 using namespace render;
 
-Game::Game()
-  : event_distributor_{}
-  , world_{ event_distributor_ }
-  , game_controller_{ event_distributor_, world_ }
-{
-}
-
+namespace {
 auto
-Game::initialize(Settings settings) -> void
+load_tile_renderer_program(std::filesystem::path assets) -> render::Program
 {
-  spdlog::debug("Game::initialize()");
-  Application::initialize();
-
-  const auto& assets = settings.assets_directory_;
-
   // Construct tile renderer
   auto program = render::Program{};
   [&]() {
@@ -38,9 +30,27 @@ Game::initialize(Settings settings) -> void
     shaders.emplace_back(std::move(fs_shader));
     program = render::link_program(shaders);
   }();
+  return std::move(program);
+}
+} // namespace
 
-  tile_renderer_ = render::TileRenderer{ std::move(program) };
+Game::Game(interfaces::IRenderable& renderable, Settings settings)
+  : Application{ renderable }
+  , settings_{ settings }
+  , viewport_{}
+  , tile_renderer_{ render::TileRenderer{
+      viewport_,
+      load_tile_renderer_program(settings.assets_directory_) } }
+  , event_distributor_{}
+  , world_{ event_distributor_ }
+  , game_controller_{ event_distributor_, world_ }
+{
+  spdlog::debug("Game: initializing");
+
   tile_map_renderer_.emplace(render::TileMapRenderer{ *tile_renderer_ });
+  const auto& assets = settings.assets_directory_;
+
+  // tile_renderer_.emplace(std::move(program));
 
   // Create default font
   font_.emplace("arial.ttf");
@@ -62,7 +72,7 @@ Game::on_render() -> void
   world_.detect_collisions();
 
   // Render the world
-  const auto screen_size = tile_renderer_->get_screen_size();
+  const auto screen_size = viewport_.get_size();
   tile_renderer_->set_projection_matrix(0, 0, screen_size[0], screen_size[1]);
 
   tile_map_renderer_->render();
@@ -127,6 +137,13 @@ Game::on_key_callback(int key, int scancode, int action, int mods) -> void
   }
 
   Application::on_key_callback(key, scancode, action, mods);
+}
+
+auto
+Game::on_viewport_change(float x, float y, float width, float height) -> void
+{
+  viewport_.origin(glm::vec2(x, y));
+  viewport_.size(glm::vec2(width, height));
 }
 
 auto
