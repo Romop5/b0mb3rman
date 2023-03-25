@@ -42,6 +42,7 @@ Game::Game(interfaces::IRenderable& renderable, Settings settings)
       viewport_,
       load_tile_renderer_program(settings.assets_directory_) } }
   , tile_map_renderer_{ render::TileMapRenderer{ tile_renderer_ } }
+  , font_renderer_{ viewport_, settings.assets_directory_ / "data-latin.ttf" }
   , event_distributor_{}
   , world_{ event_distributor_ }
   , game_controller_{ event_distributor_, world_ }
@@ -49,9 +50,6 @@ Game::Game(interfaces::IRenderable& renderable, Settings settings)
   spdlog::debug("Game: initializing");
 
   const auto& assets = settings.assets_directory_;
-
-  // Create default font
-  font_.emplace("arial.ttf");
 
   // Load initial tile texture and map
   auto tileset = render::Tileset::load_tileset(assets / settings.tileset_name_);
@@ -83,9 +81,11 @@ Game::on_render() -> void
       origin * tile_size, size * tile_size, entity.tile_index_);
   }
 
-  font_->draw_text("ok lets go", glm::vec2(0, 0));
-  // font_->draw_text("ok", glm::vec2(100, 500));
-  // font_->draw_text("okokok", glm::vec2(100, 1000));
+  const auto text = "ok lets go";
+  const auto text_size = font_renderer_.compute_text_metrics(text);
+  const auto text_origin = (viewport_.get_size() - text_size) / glm::vec2(2.0);
+  font_renderer_.draw_text(text, text_origin);
+
   world_.delete_marked_entities();
 }
 

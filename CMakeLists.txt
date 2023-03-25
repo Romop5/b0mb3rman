@@ -24,7 +24,7 @@ add_executable(b0mb3rman
         src/render/tile_renderer.cpp
         src/render/tile_map_renderer.cpp
         src/render/tile_program.cpp
-        src/render/font.cpp
+        src/render/font_renderer.cpp
         src/render/window.cpp
         src/utils/io.cpp
         src/utils/json.cpp
