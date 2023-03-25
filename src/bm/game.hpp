@@ -34,11 +34,11 @@ public:
   explicit Game(render::interfaces::IRenderable& renderable, Settings settings);
 
 private:
-  virtual auto on_render() -> void override;
+  virtual auto on_render() -> void override final;
   virtual auto on_key_callback(int key, int scancode, int action, int mods)
-    -> void override;
+    -> void override final;
   virtual auto on_viewport_change(float x, float y, float width, float height)
-    -> void;
+    -> void override final;
 
   auto start() -> void;
 
@@ -46,8 +46,9 @@ private:
   Settings settings_;
   render::Viewport viewport_;
 
-  std::optional<render::TileRenderer> tile_renderer_;
-  std::optional<render::TileMapRenderer> tile_map_renderer_;
+  render::TileRenderer tile_renderer_;
+  render::TileMapRenderer tile_map_renderer_;
+
   std::optional<render::Font> font_;
 
   EventDistributor event_distributor_;

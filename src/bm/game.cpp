@@ -41,26 +41,23 @@ Game::Game(interfaces::IRenderable& renderable, Settings settings)
   , tile_renderer_{ render::TileRenderer{
       viewport_,
       load_tile_renderer_program(settings.assets_directory_) } }
+  , tile_map_renderer_{ render::TileMapRenderer{ tile_renderer_ } }
   , event_distributor_{}
   , world_{ event_distributor_ }
   , game_controller_{ event_distributor_, world_ }
 {
   spdlog::debug("Game: initializing");
 
-  tile_map_renderer_.emplace(render::TileMapRenderer{ *tile_renderer_ });
   const auto& assets = settings.assets_directory_;
-
-  // tile_renderer_.emplace(std::move(program));
 
   // Create default font
   font_.emplace("arial.ttf");
 
   // Load initial tile texture and map
   auto tileset = render::Tileset::load_tileset(assets / settings.tileset_name_);
-
   auto tilemap = render::TiledMap::load_map(assets / settings.tilemap_path_,
                                             std::move(tileset));
-  tile_map_renderer_->add_map("default", tilemap);
+  tile_map_renderer_.add_map("default", tilemap);
 
   start();
 }
@@ -73,16 +70,16 @@ Game::on_render() -> void
 
   // Render the world
   const auto screen_size = viewport_.get_size();
-  tile_renderer_->set_projection_matrix(0, 0, screen_size[0], screen_size[1]);
+  tile_renderer_.set_projection_matrix(0, 0, screen_size[0], screen_size[1]);
 
-  tile_map_renderer_->render();
+  tile_map_renderer_.render();
 
-  const auto tile_size = tile_map_renderer_->get_tile_size();
+  const auto tile_size = tile_map_renderer_.get_tile_size();
 
   for (auto& [id, entity] : world_) {
     const auto origin = entity.aabb_.origin_;
     const auto size = entity.aabb_.size_;
-    tile_renderer_->draw_quad(
+    tile_renderer_.draw_quad(
       origin * tile_size, size * tile_size, entity.tile_index_);
   }
 
