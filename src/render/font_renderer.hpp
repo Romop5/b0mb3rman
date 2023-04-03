@@ -25,7 +25,9 @@ public:
   ~FontRenderer();
 
   auto compute_text_metrics(const std::string& text) -> glm::vec2;
-  auto draw_text(const std::string& text, glm::vec2 start) -> void;
+  auto draw_text(const std::string& text,
+                 glm::vec2 origin,
+                 bool position_relative = false) -> void;
 
 private:
   std::unique_ptr<FontRendererImpl> pimpl_;

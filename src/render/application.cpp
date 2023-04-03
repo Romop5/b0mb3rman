@@ -16,12 +16,16 @@ Application::Application(interfaces::IRenderable& renderable)
 auto
 Application::run() -> void
 {
-  is_running_ = true;
+  auto last_tick = std::chrono::high_resolution_clock::now();
 
+  is_running_ = true;
   while (is_running_) {
     using namespace gl;
 
-    on_render();
+    auto now = std::chrono::high_resolution_clock::now();
+    const auto elapsed = now - last_tick;
+    last_tick = now;
+    on_render(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
     renderable_.swap_buffers();
   }
 }
@@ -33,7 +37,7 @@ Application::stop() -> void
 }
 
 auto
-Application::on_render() -> void
+Application::on_render(std::chrono::milliseconds delta) -> void
 {
 }
 

@@ -66,6 +66,16 @@ struct AABB
     return true;
   }
 
+  auto distance_l2(const AABB& other) const
+  {
+    return glm::distance(origin_, other.origin_);
+  }
+
+  auto distance_l1(const AABB& other) const
+  {
+    return glm::dot(glm::abs(origin_ - other.origin_), glm::vec2(1));
+  }
+
   glm::vec2 origin_{ 0, 0 };
   glm::vec2 size_{ 1, 1 };
 };

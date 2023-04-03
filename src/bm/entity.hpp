@@ -51,6 +51,8 @@ public:
     return *this;
   }
 
+  auto get_id() const -> Id { return id_; }
+
 public:
   Id id_;
   utils::AABB aabb_{ glm::vec2{ 0, 0 }, glm::vec2{ 1, 1 } };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <memory>
 
 #include <render/interfaces/input_listener.hpp>
@@ -27,7 +28,7 @@ public:
   auto run() -> void;
   auto stop() -> void;
 
-  virtual auto on_render() -> void;
+  virtual auto on_render(std::chrono::milliseconds delta) -> void;
 
   /* InputListener */
   virtual auto on_key_callback(int key, int scancode, int action, int mods)

@@ -16,6 +16,7 @@ add_executable(b0mb3rman
         src/main.cpp 
         src/bm/game.cpp
         src/bm/world.cpp
+        src/bm/hud_manager.cpp
         src/render/application.cpp
         src/render/resource.cpp
         src/render/loader.cpp

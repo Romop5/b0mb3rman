@@ -49,6 +49,22 @@ public:
       std::make_unique<EventModel<E>>(event), Clock::now(), planned_time }));
   }
 
+  /**
+   * @brief Plan `E` event for `planned_time`
+   *
+   * @tparam E
+   * @param event
+   * @param planned_time
+   */
+  template<typename E>
+  auto enqueue_event(E event, std::chrono::milliseconds delta) -> void
+  {
+    event_queue_.emplace(
+      std::move(Record{ std::make_unique<EventModel<E>>(event),
+                        Clock::now(),
+                        Clock::now() + delta }));
+  }
+
   /// @brief Process all ready events
   auto dispatch() -> void
   {
@@ -160,7 +176,7 @@ private:
     {
       auto operator()(const Record& a, const Record& b) -> bool
       {
-        return a.planned_time_ < b.planned_time_;
+        return a.planned_time_ > b.planned_time_;
       }
     };
   };

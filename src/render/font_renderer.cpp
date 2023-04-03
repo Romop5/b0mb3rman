@@ -161,7 +161,9 @@ public:
     return size;
   }
 
-  auto draw_text(const std::string& text, glm::vec2 origin) -> void
+  auto draw_text(const std::string& text,
+                 glm::vec2 origin,
+                 bool position_relative = false) -> void
   {
     gl::glUseProgram(program_);
     const auto viewport_min = viewport_.get_origin();
@@ -182,6 +184,13 @@ public:
 
     glm::vec2 scale{ 1.0 };
     glm::vec2 position = origin;
+    if (position_relative) {
+      // compute relative text position
+      const auto size = compute_text_metrics(text);
+      position =
+        viewport_min + viewport_.get_size() * origin - size * glm::vec2(0.5);
+    }
+
     for (const auto& c : text) {
       if (::FT_Load_Char(face_, c, FT_LOAD_RENDER))
         continue;
@@ -246,7 +255,9 @@ FontRenderer::compute_text_metrics(const std::string& text) -> glm::vec2
 }
 
 auto
-FontRenderer::draw_text(const std::string& text, glm::vec2 start) -> void
+FontRenderer::draw_text(const std::string& text,
+                        glm::vec2 origin,
+                        bool position_relative) -> void
 {
-  pimpl_->draw_text(text, start);
+  pimpl_->draw_text(text, origin, position_relative);
 }

@@ -43,9 +43,10 @@ Game::Game(interfaces::IRenderable& renderable, Settings settings)
       load_tile_renderer_program(settings.assets_directory_) } }
   , tile_map_renderer_{ render::TileMapRenderer{ tile_renderer_ } }
   , font_renderer_{ viewport_, settings.assets_directory_ / "data-latin.ttf" }
+  , hud_manager_{ font_renderer_ }
   , event_distributor_{}
   , world_{ event_distributor_ }
-  , game_controller_{ event_distributor_, world_ }
+  , game_controller_{ event_distributor_, hud_manager_, world_ }
 {
   spdlog::debug("Game: initializing");
 
@@ -61,7 +62,7 @@ Game::Game(interfaces::IRenderable& renderable, Settings settings)
 }
 
 auto
-Game::on_render() -> void
+Game::on_render(std::chrono::milliseconds delta) -> void
 {
   event_distributor_.dispatch();
   world_.detect_collisions();
@@ -81,11 +82,7 @@ Game::on_render() -> void
       origin * tile_size, size * tile_size, entity.tile_index_);
   }
 
-  const auto text = "ok lets go";
-  const auto text_size = font_renderer_.compute_text_metrics(text);
-  const auto text_origin = (viewport_.get_size() - text_size) / glm::vec2(2.0);
-  font_renderer_.draw_text(text, text_origin);
-
+  hud_manager_.render(delta);
   world_.delete_marked_entities();
 }
 
