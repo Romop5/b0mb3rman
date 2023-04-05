@@ -32,6 +32,11 @@ public:
     , type_{ type }
   {
   }
+  auto set_max_speed(float value) -> Entity&
+  {
+    max_speed_ = value;
+    return *this;
+  }
 
   auto set_origin(glm::vec2 origin) -> Entity&
   {
@@ -56,6 +61,19 @@ public:
 public:
   Id id_;
   utils::AABB aabb_{ glm::vec2{ 0, 0 }, glm::vec2{ 1, 1 } };
+
+  float max_speed_{ 1.0 };
+  glm::vec2 velocity_{ 0.0f, 0.0f };
+  glm::vec2 acceleration_{ 0.0f, 0.0f };
+
+  struct Controller
+  {
+    bool moving_left{ false };
+    bool moving_right{ false };
+    bool moving_down{ false };
+    bool moving_up{ false };
+  } controller_;
+
   render::TiledMap::TileIndex tile_index_{ 0 };
   std::bitset<Flags::last> flags_{ 0 };
   Type type_;

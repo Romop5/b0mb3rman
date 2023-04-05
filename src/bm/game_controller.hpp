@@ -39,7 +39,11 @@ public:
   auto handle(const event::GameStarted& event) -> void
   {
     world_.clear();
-    world_.create(Entity::Type::player).set_tile(10).set_origin({ 0, 0 });
+    world_.create(Entity::Type::player)
+      .set_tile(10)
+      .set_origin({ 0, 0 })
+      .set_max_speed(10.0f);
+
     world_.create(Entity::Type::pickup).set_tile(8).set_origin({ 5, 5 });
     world_.create(Entity::Type::pickup).set_tile(8).set_origin({ 15, 5 });
     world_.create(Entity::Type::pickup).set_tile(8).set_origin({ 8, 7 });
@@ -59,9 +63,33 @@ public:
   {
     if (const auto player_id = world_.get_player_id()) {
       auto& player = world_.get_entity(player_id.value());
-      auto& entity_origin = player.aabb_.origin_;
-      entity_origin += event.direction_;
-      // TODO: clamp entity_origin to world's dimensions
+
+      switch (event.direction_) {
+        case event::PlayerMoved::MoveDirection::left:
+          spdlog::trace("Player moved {}, should_accelerate{}",
+                        "left",
+                        event.should_accelerate);
+          player.controller_.moving_left = event.should_accelerate;
+          break;
+        case event::PlayerMoved::MoveDirection::right:
+          spdlog::trace("Player moved {}, should_accelerate{}",
+                        "right",
+                        event.should_accelerate);
+          player.controller_.moving_right = event.should_accelerate;
+          break;
+        case event::PlayerMoved::MoveDirection::up:
+          spdlog::trace("Player moved {}, should_accelerate{}",
+                        "up",
+                        event.should_accelerate);
+          player.controller_.moving_up = event.should_accelerate;
+          break;
+        case event::PlayerMoved::MoveDirection::down:
+          spdlog::trace("Player moved {}, should_accelerate{}",
+                        "down",
+                        event.should_accelerate);
+          player.controller_.moving_down = event.should_accelerate;
+          break;
+      }
     } else {
       spdlog::debug("Missing player entity ingame");
     }
@@ -111,27 +139,25 @@ public:
 
   auto handle(const event::BombPlanted& event) -> void
   {
-    const auto coords = glm::vec2{ 0, 0 };
-    auto bomb_id = world_.create(Entity::Type::bomb)
-                     .set_origin(coords)
-                     .set_tile(12)
-                     .get_id();
-
     if (const auto player_id = world_.get_player_id()) {
+      auto bomb_id = world_.create(Entity::Type::bomb).set_tile(12).get_id();
+
       auto& player = world_.get_entity(player_id.value());
-      world_.get_entity(bomb_id).set_origin(player.aabb_.origin_);
+
+      const auto coords = glm::round(player.aabb_.origin_);
+      world_.get_entity(bomb_id).set_origin(coords);
+
+      using namespace std::chrono_literals;
+      event_distributor_.enqueue_event(event::BombExploded{ bomb_id }, 2000ms);
+
+      spdlog::trace("Planting bomb at ({}, {})", coords.x, coords.y);
+
+      hud_manager_.get_texts()
+        .get_or_create_default("status")
+        .set_text("Bomb planted!")
+        .set_fade_effect(HUDManager::Text::FadingEffect{ 2 })
+        .set_wave_effect(HUDManager::Text::WaveEffect{ 0, 3 });
     }
-
-    using namespace std::chrono_literals;
-    event_distributor_.enqueue_event(event::BombExploded{ bomb_id }, 2000ms);
-
-    spdlog::trace("Planting bomb at ({}, {})", coords.x, coords.y);
-
-    hud_manager_.get_texts()
-      .get_or_create_default("status")
-      .set_text("Bomb planted!")
-      .set_fade_effect(HUDManager::Text::FadingEffect{ 2 })
-      .set_wave_effect(HUDManager::Text::WaveEffect{ 0, 3 });
   }
 
   auto handle(const event::EntityCollide& event) -> void

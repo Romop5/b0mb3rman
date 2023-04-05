@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <vector>
 
 #include <bm/entity.hpp>
@@ -28,6 +29,9 @@ public:
   auto clear() -> void;
 
   auto delete_marked_entities() -> void;
+  auto update(std::chrono::milliseconds delta) -> void;
+
+protected:
   auto detect_collisions() -> void;
 
 private:

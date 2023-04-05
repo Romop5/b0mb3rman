@@ -19,8 +19,16 @@ struct GameStarted
 /* Entity-related events*/
 struct PlayerMoved
 {
-  glm::vec2 direction_;
+  bool should_accelerate;
+  enum class MoveDirection
+  {
+    up,
+    down,
+    left,
+    right
+  } direction_;
 };
+
 struct PlayerDied : public meta::EntityUpdate
 {};
 

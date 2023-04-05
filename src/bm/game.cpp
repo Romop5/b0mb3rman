@@ -65,7 +65,7 @@ auto
 Game::on_render(std::chrono::milliseconds delta) -> void
 {
   event_distributor_.dispatch();
-  world_.detect_collisions();
+  world_.update(delta);
 
   // Render the world
   const auto screen_size = viewport_.get_size();
@@ -93,7 +93,7 @@ Game::on_key_callback(int key, int scancode, int action, int mods) -> void
   const auto delta = 1;
   auto movement = [&]() -> std::optional<glm::vec2> {
     glm::vec2 dir{ 0.0, 0.0 };
-    if (action == GLFW_RELEASE)
+    if (action == GLFW_RELEASE or action == GLFW_REPEAT)
       return dir;
     switch (key) {
       case GLFW_KEY_LEFT: {
@@ -118,8 +118,25 @@ Game::on_key_callback(int key, int scancode, int action, int mods) -> void
     return dir;
   }();
 
-  if (movement) {
-    event_distributor_.enqueue_event(bm::event::PlayerMoved{ *movement });
+  auto movement_type =
+    [&]() -> std::optional<bm::event::PlayerMoved::MoveDirection> {
+    switch (key) {
+      case GLFW_KEY_LEFT:
+        return bm::event::PlayerMoved::MoveDirection::left;
+      case GLFW_KEY_RIGHT:
+        return bm::event::PlayerMoved::MoveDirection::right;
+      case GLFW_KEY_DOWN:
+        return bm::event::PlayerMoved::MoveDirection::down;
+      case GLFW_KEY_UP:
+        return bm::event::PlayerMoved::MoveDirection::up;
+      default:
+        return {};
+    }
+  }();
+
+  if (movement_type and action != GLFW_REPEAT) {
+    event_distributor_.enqueue_event(
+      bm::event::PlayerMoved{ action == GLFW_PRESS, movement_type.value() });
   }
 
   if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {

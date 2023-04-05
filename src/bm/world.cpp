@@ -59,6 +59,60 @@ World::delete_marked_entities() -> void
 }
 
 auto
+World::update(std::chrono::milliseconds delta) -> void
+{
+  const auto elapsed_seconds = delta.count() / 1000.0f;
+
+  /* Update acceleration and speed */
+  for (auto& [id, entity] : entities_) {
+    const auto& controller = entity.controller_;
+    entity.acceleration_ =
+      glm::vec2(controller.moving_right) * glm::vec2(1.0, 0.0) +
+      glm::vec2(controller.moving_left) * glm::vec2(-1.0, 0.0) +
+      glm::vec2(controller.moving_down) * glm::vec2(0.0, 1.0) +
+      glm::vec2(controller.moving_up) * glm::vec2(0.0, -1.0);
+
+    entity.velocity_ += entity.acceleration_;
+
+    const auto current_speed = glm::length(entity.velocity_);
+    if (current_speed < 0.001) {
+      continue;
+    }
+
+    const auto new_speed =
+      glm::min(entity.max_speed_, glm::length(entity.velocity_));
+
+    const auto speed_adjustment = new_speed / current_speed;
+    entity.velocity_ *= speed_adjustment;
+  }
+
+  /* Update positions */
+  for (auto& [id, entity] : entities_) {
+    const auto position_delta = elapsed_seconds * entity.velocity_;
+    entity.aabb_.origin_ += position_delta;
+
+    if (glm::length(position_delta) > 0.01) {
+      spdlog::trace("Updated entity {} to position ({},{}) (delta: {},{})",
+                    id,
+                    entity.aabb_.origin_.x,
+                    entity.aabb_.origin_.y,
+                    position_delta.x,
+                    position_delta.y);
+    }
+  }
+
+  /* Decrease speed (attenuation) */
+  const auto attenuation = 10.0f;
+  for (auto& [id, entity] : entities_) {
+    entity.velocity_ +=
+      entity.velocity_ *
+      glm::vec2(-std::min(elapsed_seconds * attenuation, 1.0f));
+  }
+
+  detect_collisions();
+}
+
+auto
 World::detect_collisions() -> void
 {
   // naive O(N^2) comparison
