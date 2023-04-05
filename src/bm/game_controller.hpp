@@ -32,7 +32,8 @@ public:
                                          event::PlayerDied,
                                          event::BombExploded,
                                          event::BombPlanted,
-                                         event::EntityCollide>(*this);
+                                         event::EntityCollide,
+                                         event::FireTerminated>(*this);
   }
 
 public:
@@ -51,7 +52,7 @@ public:
 
     hud_manager_.get_texts().clear();
     hud_manager_.get_texts().create_named(
-      "status", HUDManager::Text{ "", "", 10, glm::vec2(0.5, 0.9), true });
+      "status", HUDManager::Text{ "", "", 10, glm::vec2(0.5, 0.5), true });
 
     hud_manager_.get_texts()
       .get_or_create_default("status")
@@ -114,7 +115,6 @@ public:
 
   auto handle(const event::BombExploded& event) -> void
   {
-
     if (not world_.has_entity(event.actor_)) {
       return;
     }
@@ -122,19 +122,42 @@ public:
     auto& bomb = world_.get_entity(event.actor_);
     bomb.flags_.set(Entity::Flags::marked_for_destruction);
 
-    const auto player_id = world_.get_player_id();
+    for (signed int i = -1; i < 2; i++) {
+      for (signed int j = -1; j < 2; j++) {
+        const auto fire_id = world_.create(Entity::Type::fire)
+                               .set_tile(60)
+                               .set_origin(bomb.aabb_.origin_ + glm::vec2(i, j))
+                               .get_id();
+
+        using namespace std::chrono_literals;
+        event_distributor_.enqueue_event(event::FireTerminated{ fire_id },
+                                         1000ms);
+      }
+    }
+
+    /*const auto player_id = world_.get_player_id();
     if (player_id) {
       auto& player = world_.get_entity(player_id.value());
       if (player.aabb_.distance_l1(bomb.aabb_) < 5) {
         event_distributor_.enqueue_event(event::PlayerDied{});
       }
-    }
+    }*/
 
     hud_manager_.get_texts()
       .get_or_create_default("status")
       .set_text("Bomb exploded!")
-      .set_fade_effect(HUDManager::Text::FadingEffect{ 2 })
-      .set_wave_effect(HUDManager::Text::WaveEffect{ 0, 3 });
+      .set_fade_effect(HUDManager::Text::FadingEffect{ 1 })
+      .set_wave_effect(HUDManager::Text::WaveEffect{ 0, 5 });
+  }
+
+  auto handle(const event::FireTerminated& event) -> void
+  {
+    if (not world_.has_entity(event.actor_)) {
+      return;
+    }
+
+    auto& fire = world_.get_entity(event.actor_);
+    fire.flags_.set(Entity::marked_for_destruction);
   }
 
   auto handle(const event::BombPlanted& event) -> void
@@ -155,8 +178,8 @@ public:
       hud_manager_.get_texts()
         .get_or_create_default("status")
         .set_text("Bomb planted!")
-        .set_fade_effect(HUDManager::Text::FadingEffect{ 2 })
-        .set_wave_effect(HUDManager::Text::WaveEffect{ 0, 3 });
+        .set_fade_effect(HUDManager::Text::FadingEffect{ 1 })
+        .set_wave_effect(HUDManager::Text::WaveEffect{ 0, 5 });
     }
   }
 
@@ -173,6 +196,10 @@ public:
         pickup.flags_.set(Entity::Flags::marked_for_destruction);
 
         spdlog::debug("Picked up a pickup");
+      } else if (entity_a.type_ == Entity::Type::fire ||
+                 entity_b.type_ == Entity::Type::fire) {
+
+        event_distributor_.enqueue_event(event::PlayerDied{});
       }
     }
   }

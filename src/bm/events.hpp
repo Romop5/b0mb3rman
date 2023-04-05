@@ -36,7 +36,8 @@ struct BombExploded : public meta::EntityUpdate
 {};
 struct BombPlanted
 {};
-
+struct FireTerminated : public meta::EntityUpdate
+{};
 struct EntityCollide
 {
   Entity::Id actor_a_;

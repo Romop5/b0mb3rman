@@ -15,6 +15,7 @@ public:
     player,
     bomb,
     pickup,
+    fire,
   };
 
   enum Flags
