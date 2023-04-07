@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <vector>
+#include <optional>
 
 #include <bm/entity.hpp>
 #include <bm/event_distributor.hpp>

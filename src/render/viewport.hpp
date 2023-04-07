@@ -17,6 +17,6 @@ public:
 
 private:
   glm::vec2 origin_{ 0 };
-  glm::vec2 size_{ 0 };
+  glm::vec2 size_{ 640, 480 };
 };
 } // namespace

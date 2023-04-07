@@ -43,7 +43,7 @@ render::TileRenderer::bind_tileset(const Tileset& tileset) -> void
 
   {
     auto location = gl::glGetUniformLocation(program_, "tile_texture");
-    gl::glUniform1ui(location, 0);
+    gl::glUniform1i(location, 0);
   }
 
   {

@@ -2,9 +2,9 @@
 out vec4 FragColor;
 
 uniform sampler2D   tile_texture;
-uniform unsigned int tile_id;
-uniform unsigned int tile_count_x;
-uniform unsigned int tile_count_y;
+uniform uint tile_id;
+uniform uint tile_count_x;
+uniform uint tile_count_y;
 
 // UV with quad (<0,1>x<0,1> for the whole quad)
 in vec2 uv; 

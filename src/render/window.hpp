@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <optional>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>

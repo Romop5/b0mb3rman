@@ -19,7 +19,10 @@ class b0berman(ConanFile):
     ]
 
     generators = "CMakeDeps"
-    default_options = {}
+    default_options = {
+        "freeimage:with_jpeg": False,
+        "freeimage:with_jpeg2000": False,
+    }
 
     def imports(self):
         self.copy("*.dll", dst="bin", src="bin")
