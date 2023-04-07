@@ -31,6 +31,7 @@ public:
   auto get_or_create_default(Key name) -> Entity&;
 
   auto get_entity(Key id) -> Entity&;
+  auto value_or(Key id, const Entity&) -> const Entity&;
   auto has_entity(Key id) const -> bool;
   auto clear() -> void;
   auto get_entries() -> const std::unordered_map<Key, Entity>&;
@@ -88,6 +89,14 @@ auto
 EntityRegistry<Entity, Key, Mechanism>::get_entity(Key id) -> Entity&
 {
   return entities_.at(id);
+}
+
+template<typename Entity, typename Key, EntityRegistryKeyPolicy Mechanism>
+auto
+EntityRegistry<Entity, Key, Mechanism>::value_or(Key id, const Entity& entity)
+  -> const Entity&
+{
+  return has_entity(id) ? get_entity(id) : entity;
 }
 
 template<typename Entity, typename Key, EntityRegistryKeyPolicy Mechanism>

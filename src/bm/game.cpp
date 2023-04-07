@@ -48,42 +48,50 @@ Game::Game(interfaces::IRenderable& renderable, Settings settings)
   , world_{ event_distributor_ }
   , game_controller_{ event_distributor_, hud_manager_, world_ }
 {
-  spdlog::debug("Game: initializing");
-
-  const auto& assets = settings.assets_directory_;
-
-  // Load initial tile texture and map
-  auto tileset = render::Tileset::load_tileset(assets / settings.tileset_name_);
-  auto tilemap = render::TiledMap::load_map(assets / settings.tilemap_path_,
-                                            std::move(tileset));
-  tile_map_renderer_.add_map("default", tilemap);
-
-  start();
+  load_level();
 }
 
 auto
 Game::on_render(std::chrono::milliseconds delta) -> void
 {
+  /* Update world logic */
   event_distributor_.dispatch();
   world_.update(delta);
+  world_.delete_marked_entities();
 
-  // Render the world
+  /* Render the world */
   const auto screen_size = viewport_.get_size();
   tile_renderer_.set_projection_matrix(0, 0, screen_size[0], screen_size[1]);
 
-  tile_map_renderer_.render();
+  if (level_) {
+    /* Draw static map */
+    if (level_->map_) {
+      tile_map_renderer_.render(*level_->map_);
+    }
 
-  const auto tile_size = tile_map_renderer_.get_tile_size();
+    const auto& default_tileset = level_->tilesets_.get_entity("default");
+    if (default_tileset) {
+      const auto tile_size = tile_map_renderer_.get_tile_size(*level_->map_);
 
-  for (auto& [id, entity] : world_) {
-    const auto origin = entity.aabb_.origin_;
-    const auto size = entity.aabb_.size_;
-    tile_renderer_.draw_quad(
-      origin * tile_size, size * tile_size, entity.tile_index_);
+      /* Draw dynamic entities */
+      for (const auto& [id, entity] : world_) {
+        const auto origin = entity.aabb_.origin_;
+        const auto size = entity.aabb_.size_;
+
+        const auto& tileset = level_->tilesets_.value_or(
+          entity.tile_.tileset_name_, default_tileset);
+
+        tile_renderer_.bind_tileset(*tileset);
+        tile_renderer_.draw_quad(
+          origin * tile_size, size * tile_size, entity.tile_.tile_index_);
+      }
+    } else {
+      spdlog::error("Default tileset not defined!");
+    }
   }
 
+  /* Render overlays */
   hud_manager_.render(delta);
-  world_.delete_marked_entities();
 }
 
 auto
@@ -165,4 +173,12 @@ Game::start() -> void
   event_distributor_.clear();
 
   event_distributor_.enqueue_event(event::GameStarted{});
+}
+
+auto
+Game::load_level() -> void
+{
+  spdlog::debug("Game: initializing");
+  level_ = std::make_unique<Level>(static_cast<nlohmann::json>(settings_));
+  start();
 }

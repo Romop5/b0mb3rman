@@ -13,6 +13,7 @@
 #include <bm/event_distributor.hpp>
 #include <bm/game_controller.hpp>
 #include <bm/hud_manager.hpp>
+#include <bm/level.hpp>
 #include <bm/world.hpp>
 
 namespace bm {
@@ -25,16 +26,16 @@ public:
     std::filesystem::path assets_directory_;
     std::string tileset_name_;
     std::string tilemap_path_;
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Settings,
-                                                    assets_directory_,
-                                                    tileset_name_,
-                                                    tilemap_path_)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Settings,
+                                                assets_directory_,
+                                                tileset_name_,
+                                                tilemap_path_)
   };
 
 public:
   explicit Game(render::interfaces::IRenderable& renderable, Settings settings);
 
-private:
+protected:
   virtual auto on_render(std::chrono::milliseconds delta)
     -> void override final;
   virtual auto on_key_callback(int key, int scancode, int action, int mods)
@@ -43,6 +44,7 @@ private:
     -> void override final;
 
   auto start() -> void;
+  auto load_level() -> void;
 
 private:
   Settings settings_;
@@ -60,6 +62,8 @@ private:
 
   /// @brief Manages game dynamics (update of entites & map)
   GameController game_controller_;
+
+  std::unique_ptr<Level> level_;
 };
 
 } // namespace bm

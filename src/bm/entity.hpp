@@ -31,8 +31,7 @@ public:
   Entity(Id id, Type type)
     : id_{ id }
     , type_{ type }
-  {
-  }
+  {}
   auto set_max_speed(float value) -> Entity&
   {
     max_speed_ = value;
@@ -53,7 +52,7 @@ public:
 
   auto set_tile(render::TiledMap::TileIndex tile_index) -> Entity&
   {
-    tile_index_ = tile_index;
+    tile_.tile_index_ = tile_index;
     return *this;
   }
 
@@ -75,7 +74,12 @@ public:
     bool moving_up{ false };
   } controller_;
 
-  render::TiledMap::TileIndex tile_index_{ 0 };
+  struct Tile
+  {
+    std::string tileset_name_{ "default" };
+    render::TiledMap::TileIndex tile_index_{ 0 };
+  } tile_;
+
   std::bitset<Flags::last> flags_{ 0 };
   Type type_;
 };
