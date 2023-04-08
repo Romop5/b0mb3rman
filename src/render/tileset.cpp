@@ -2,6 +2,7 @@
 
 #include <render/loader.hpp>
 #include <render/tileset.hpp>
+#include <utils/color.hpp>
 
 using namespace render;
 
@@ -13,8 +14,13 @@ Tileset::load_tileset(const std::filesystem::path& file)
 
   auto tiles = utils::read_json(file);
 
-  tileset->texture_ =
-    render::load_texture_from_file(file.parent_path() / tiles.at("image"));
+  std::optional<utils::Color> transparent_color;
+  if (tiles.contains("transparentcolor")) {
+    transparent_color =
+      utils::Color(tiles.at("transparentcolor").get<std::string>());
+  }
+  tileset->texture_ = render::load_texture_from_file(
+    file.parent_path() / tiles.at("image"), transparent_color);
 
   tileset->tile_size_x_ =
     tiles.value("imagewidth", 1) / tiles.value("tilewidth", 1);

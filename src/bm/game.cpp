@@ -40,9 +40,9 @@ Game::Game(interfaces::IRenderable& renderable, Settings settings)
   , viewport_{}
   , tile_renderer_{ render::TileRenderer{
       viewport_,
-      load_tile_renderer_program(settings.assets_directory_) } }
+      load_tile_renderer_program(settings.assets_directory) } }
   , tile_map_renderer_{ render::TileMapRenderer{ tile_renderer_ } }
-  , font_renderer_{ viewport_, settings.assets_directory_ / "data-latin.ttf" }
+  , font_renderer_{ viewport_, settings.assets_directory / "data-latin.ttf" }
   , hud_manager_{ font_renderer_ }
   , event_distributor_{}
   , world_{ event_distributor_ }
@@ -78,6 +78,10 @@ Game::on_render(std::chrono::milliseconds delta) -> void
         const auto origin = entity.aabb_.origin_;
         const auto size = entity.aabb_.size_;
 
+        if (not level_->tilesets_.has_entity(entity.tile_.tileset_name_)) {
+          spdlog::warn("Tileset '{}' is not loaded, using 'default'",
+                       entity.tile_.tileset_name_);
+        }
         const auto& tileset = level_->tilesets_.value_or(
           entity.tile_.tileset_name_, default_tileset);
 
@@ -179,6 +183,8 @@ auto
 Game::load_level() -> void
 {
   spdlog::debug("Game: initializing");
-  level_ = std::make_unique<Level>(static_cast<nlohmann::json>(settings_));
+  const auto& assets = settings_.assets_directory;
+  const auto level_settings = utils::read_json(assets / settings_.level);
+  level_ = std::make_unique<Level>(assets, level_settings);
   start();
 }

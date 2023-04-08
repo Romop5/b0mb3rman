@@ -49,7 +49,11 @@ public:
     aabb_.size_ = size;
     return *this;
   }
-
+  auto set_tileset(std::string tileset) -> Entity&
+  {
+    tile_.tileset_name_ = tileset;
+    return *this;
+  }
   auto set_tile(render::TiledMap::TileIndex tile_index) -> Entity&
   {
     tile_.tile_index_ = tile_index;

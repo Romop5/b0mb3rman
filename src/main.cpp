@@ -23,17 +23,14 @@ main(int argc, const char* argv[])
   spdlog::cfg::load_env_levels();
 
   bm::Game::Settings settings;
-  settings.assets_directory_ = std::filesystem::path{ "./assets" };
-  settings.tileset_name_ = "cavesofgallet_tiles.json";
-  settings.tilemap_path_ = "map.json";
+  settings.assets_directory = std::filesystem::path{ "./assets" };
 
   // Parse arguments
-  auto cli =
-    lyra::cli() |
-    lyra::opt(settings.tileset_name_, "tileset_path")["-t"]["--tileset_path"](
-      "Path to tile set definition (JSON)") |
-    lyra::opt(settings.tilemap_path_, "tilemap_path")["-t"]["--tilemap_path"](
-      "Path to tile map definition (JSON)");
+  auto cli = lyra::cli();
+  /*lyra::opt(settings.tileset_name, "tileset_path")["-t"]["--tileset_path"](
+    "Path to tile set definition (JSON)") |
+  lyra::opt(settings.tilemap_path, "tilemap_path")["-t"]["--tilemap_path"](
+    "Path to tile map definition (JSON)");*/
 
   const auto result = cli.parse({ argc, argv });
   if (!result) {

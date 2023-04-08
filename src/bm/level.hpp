@@ -14,17 +14,17 @@ class Level
 public:
   struct Settings
   {
-    std::filesystem::path assets_directory_;
-    std::string tileset_name_;
-    std::string tilemap_path_;
+    std::string tileset_name;
+    std::string tilemap_path;
+    std::vector<std::string> tilesets;
     NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Settings,
-                                                assets_directory_,
-                                                tileset_name_,
-                                                tilemap_path_)
+                                                tileset_name,
+                                                tilemap_path,
+                                                tilesets)
   };
 
 public:
-  explicit Level(Settings settings);
+  Level(std::filesystem::path assets_directory, Settings settings);
 
 public:
   Settings settings_;

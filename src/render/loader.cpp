@@ -16,10 +16,13 @@ static struct FreeImageInitializerGuard
 using namespace render;
 
 auto
-render::load_texture_from_file(const std::filesystem::path& path) -> Texture
+render::load_texture_from_file(const std::filesystem::path& path,
+                               std::optional<utils::Color> alpha_color)
+  -> Texture
 try {
+  spdlog::trace("load_texture_from_file: '{}'", path.c_str());
   if (not std::filesystem::exists(path)) {
-    throw std::runtime_error(fmt::format("Missing file"));
+    throw std::runtime_error(fmt::format("Missing file {}", path.c_str()));
   }
 
   // Source:
@@ -102,10 +105,19 @@ try {
       gl_texture_data[j_out].g = image_data[j_in * 4 + 1];
       gl_texture_data[j_out].b = image_data[j_in * 4 + 0];
       gl_texture_data[j_out].a = image_data[j_in * 4 + 3];
+
+      if (alpha_color) {
+        const auto& color = *alpha_color;
+        auto& pixel = gl_texture_data[j_out];
+        if (utils::Color(pixel.r, pixel.g, pixel.b) == color) {
+          pixel.a = 0;
+        }
+      }
     }
   }
 
   FreeImage_Unload(temp);
+  FreeImage_Unload(imagen);
 
   auto result = create_texture();
   gl::GLuint tex = result;

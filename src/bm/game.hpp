@@ -23,13 +23,10 @@ class Game : public render::Application
 public:
   struct Settings
   {
-    std::filesystem::path assets_directory_;
-    std::string tileset_name_;
-    std::string tilemap_path_;
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Settings,
-                                                assets_directory_,
-                                                tileset_name_,
-                                                tilemap_path_)
+    std::filesystem::path assets_directory;
+    std::filesystem::path level{ "levels/default.json" };
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Settings, assets_directory)
   };
 
 public:

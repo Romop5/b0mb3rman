@@ -41,7 +41,8 @@ public:
   {
     world_.clear();
     world_.create(Entity::Type::player)
-      .set_tile(10)
+      .set_tileset("characters/farmer.json")
+      .set_tile(2)
       .set_origin({ 0, 0 })
       .set_max_speed(10.0f);
 
@@ -71,24 +72,28 @@ public:
                         "left",
                         event.should_accelerate);
           player.controller_.moving_left = event.should_accelerate;
+          player.set_tile(3);
           break;
         case event::PlayerMoved::MoveDirection::right:
           spdlog::trace("Player moved {}, should_accelerate{}",
                         "right",
                         event.should_accelerate);
           player.controller_.moving_right = event.should_accelerate;
+          player.set_tile(1);
           break;
         case event::PlayerMoved::MoveDirection::up:
           spdlog::trace("Player moved {}, should_accelerate{}",
                         "up",
                         event.should_accelerate);
           player.controller_.moving_up = event.should_accelerate;
+          player.set_tile(0);
           break;
         case event::PlayerMoved::MoveDirection::down:
           spdlog::trace("Player moved {}, should_accelerate{}",
                         "down",
                         event.should_accelerate);
           player.controller_.moving_down = event.should_accelerate;
+          player.set_tile(2);
           break;
       }
     } else {

@@ -1,3 +1,4 @@
+#include <cassert>
 #include <render/tile_map_renderer.hpp>
 
 using namespace render;
@@ -9,8 +10,6 @@ TileMapRenderer::TileMapRenderer(TileRenderer& renderer)
 auto
 TileMapRenderer::render(const TiledMap& map) -> void
 {
-  assert(map);
-
   renderer_.bind_tileset(*map.tileset_);
 
   const auto tile_size = get_tile_size(map);
