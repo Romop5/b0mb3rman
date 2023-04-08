@@ -30,6 +30,7 @@ add_executable(b0mb3rman
         src/render/window.cpp
         src/utils/io.cpp
         src/utils/json.cpp
+        src/utils/color.cpp
 )
 target_link_libraries(b0mb3rman PUBLIC 
         bfg::lyra 
