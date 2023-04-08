@@ -1,0 +1,31 @@
+{
+       "columns": 4,
+       "image": "Farmer.png",
+       "imageheight": 80,
+       "imagewidth": 64,
+       "margin": 0,
+       "name": "character",
+       "spacing": 0,
+       "tilecount": 20,
+       "tiledversion": "1.10.1",
+       "tileheight": 16,
+       "tiles": [
+              {
+                     "animation": [
+                            {
+                                   "duration": 300,
+                                   "tileid": 16
+                            },
+                            {
+                                   "duration": 300,
+                                   "tileid": 17
+                            }
+                     ],
+                     "id": 0
+              }
+       ],
+       "tilewidth": 16,
+       "transparentcolor": "#ff00ff",
+       "type": "tileset",
+       "version": "1.10"
+}
