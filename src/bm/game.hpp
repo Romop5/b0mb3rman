@@ -42,6 +42,7 @@ protected:
 
   auto start() -> void;
   auto load_level() -> void;
+  auto update_animations(std::chrono::milliseconds delta) -> void;
 
 private:
   Settings settings_;

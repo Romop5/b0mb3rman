@@ -1,8 +1,8 @@
 #pragma once
 
 #include <chrono>
-#include <vector>
 #include <optional>
+#include <vector>
 
 #include <bm/entity.hpp>
 #include <bm/event_distributor.hpp>

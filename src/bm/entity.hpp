@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bitset>
+#include <optional>
 
 #include <glm/glm.hpp>
 #include <render/tiled_map.hpp>
@@ -31,7 +32,8 @@ public:
   Entity(Id id, Type type)
     : id_{ id }
     , type_{ type }
-  {}
+  {
+  }
   auto set_max_speed(float value) -> Entity&
   {
     max_speed_ = value;
@@ -54,9 +56,19 @@ public:
     tile_.tileset_name_ = tileset;
     return *this;
   }
+
   auto set_tile(render::TiledMap::TileIndex tile_index) -> Entity&
   {
     tile_.tile_index_ = tile_index;
+    tile_.animation_.reset();
+    return *this;
+  }
+
+  auto set_animation(unsigned int animation_id) -> Entity&
+  {
+    tile_.animation_ = Entity::Tile::Animation{
+      animation_id, 0, std::chrono::milliseconds{ 0 }
+    };
     return *this;
   }
 
@@ -76,12 +88,24 @@ public:
     bool moving_right{ false };
     bool moving_down{ false };
     bool moving_up{ false };
+
+    bool any() const
+    {
+      return moving_left or moving_right or moving_down or moving_up;
+    }
   } controller_;
 
   struct Tile
   {
     std::string tileset_name_{ "default" };
     render::TiledMap::TileIndex tile_index_{ 0 };
+    struct Animation
+    {
+      unsigned int id;
+      unsigned int keypoint_id;
+      std::chrono::milliseconds remaining_time;
+    };
+    std::optional<Animation> animation_;
   } tile_;
 
   std::bitset<Flags::last> flags_{ 0 };

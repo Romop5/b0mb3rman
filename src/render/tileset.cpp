@@ -28,5 +28,20 @@ Tileset::load_tileset(const std::filesystem::path& file)
     tiles.value("imageheight", 1) / tiles.value("tileheight", 1);
   tileset->total_tiles_ = tiles.value("tilecount", 1);
 
+  if (tiles.contains("tiles")) {
+    for (const auto tile : tiles.at("tiles")) {
+      const auto id = tile.at("id").get<unsigned int>();
+      const auto animation = tile.at("animation");
+
+      Tileset::Animation result;
+      for (const auto keypoint : animation) {
+        result.sequence.emplace_back(Tileset::Animation::Keypoint{
+          std::chrono::milliseconds{ keypoint.at("duration") },
+          keypoint.at("tileid") });
+      }
+      tileset->animations.resize(id + 1);
+      tileset->animations.at(id) = result;
+    }
+  }
   return tileset;
 }

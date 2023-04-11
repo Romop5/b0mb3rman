@@ -66,34 +66,41 @@ public:
     if (const auto player_id = world_.get_player_id()) {
       auto& player = world_.get_entity(player_id.value());
 
+      auto update_visual = [&](unsigned int movement_category) {
+        if (event.should_accelerate) {
+          player.set_animation(movement_category);
+        } else if (not player.controller_.any()) {
+          player.set_tile(movement_category);
+        }
+      };
       switch (event.direction_) {
         case event::PlayerMoved::MoveDirection::left:
           spdlog::trace("Player moved {}, should_accelerate{}",
                         "left",
                         event.should_accelerate);
           player.controller_.moving_left = event.should_accelerate;
-          player.set_tile(3);
+          update_visual(3);
           break;
         case event::PlayerMoved::MoveDirection::right:
           spdlog::trace("Player moved {}, should_accelerate{}",
                         "right",
                         event.should_accelerate);
           player.controller_.moving_right = event.should_accelerate;
-          player.set_tile(1);
+          update_visual(1);
           break;
         case event::PlayerMoved::MoveDirection::up:
           spdlog::trace("Player moved {}, should_accelerate{}",
                         "up",
                         event.should_accelerate);
           player.controller_.moving_up = event.should_accelerate;
-          player.set_tile(0);
+          update_visual(0);
           break;
         case event::PlayerMoved::MoveDirection::down:
           spdlog::trace("Player moved {}, should_accelerate{}",
                         "down",
                         event.should_accelerate);
           player.controller_.moving_down = event.should_accelerate;
-          player.set_tile(2);
+          update_visual(2);
           break;
       }
     } else {

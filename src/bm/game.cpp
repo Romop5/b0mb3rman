@@ -59,6 +59,8 @@ Game::on_render(std::chrono::milliseconds delta) -> void
   world_.update(delta);
   world_.delete_marked_entities();
 
+  update_animations(delta);
+
   /* Render the world */
   const auto screen_size = viewport_.get_size();
   tile_renderer_.set_projection_matrix(0, 0, screen_size[0], screen_size[1]);
@@ -187,4 +189,40 @@ Game::load_level() -> void
   const auto level_settings = utils::read_json(assets / settings_.level);
   level_ = std::make_unique<Level>(assets, level_settings);
   start();
+}
+
+auto
+Game::update_animations(std::chrono::milliseconds delta) -> void
+{
+  for (auto& [id, entity] : world_) {
+    if (entity.tile_.animation_) {
+      auto& animation = entity.tile_.animation_.value();
+
+      const auto& tileset_name = entity.tile_.tileset_name_;
+      if (not level_->tilesets_.has_entity(tileset_name)) {
+        continue;
+      }
+
+      const auto& tileset = level_->tilesets_.get_entity(tileset_name);
+      if (tileset->animations.size() <= animation.id or
+          tileset->animations.at(animation.id).sequence.empty()) {
+        continue;
+      }
+
+      if (animation.remaining_time > delta) {
+        animation.remaining_time -= delta;
+        continue;
+      }
+
+      const auto& sequence_definition =
+        tileset->animations.at(animation.id).sequence;
+      const auto keypoint_count = sequence_definition.size();
+      const auto new_keypoint_id = (animation.keypoint_id + 1) % keypoint_count;
+      const auto keypoint_definition = sequence_definition.at(new_keypoint_id);
+
+      animation.keypoint_id = new_keypoint_id;
+      animation.remaining_time = keypoint_definition.duration;
+      entity.tile_.tile_index_ = keypoint_definition.tile;
+    }
+  }
 }

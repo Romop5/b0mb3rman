@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <filesystem>
 #include <render/resource.hpp>
 
@@ -10,6 +11,17 @@ namespace render {
  */
 struct Tileset
 {
+  struct Animation
+  {
+    struct Keypoint
+    {
+      std::chrono::milliseconds duration;
+      unsigned int tile;
+    };
+    std::vector<Keypoint> sequence;
+  };
+
+  std::vector<Animation> animations;
   unsigned int tile_size_x_{ 0 };
   unsigned int tile_size_y_{ 0 };
   // unsigned int tiles_per_row_{0};
