@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <queue>
+#include <random>
 #include <variant>
 #include <vector>
 
@@ -134,16 +135,22 @@ public:
     auto& bomb = world_.get_entity(event.actor_);
     bomb.flags_.set(Entity::Flags::marked_for_destruction);
 
+    std::default_random_engine generator;
+    std::normal_distribution<float> distribution(200, 50);
+
     for (signed int i = -1; i < 2; i++) {
       for (signed int j = -1; j < 2; j++) {
         const auto fire_id = world_.create(Entity::Type::fire)
-                               .set_tile(60)
+                               .set_tileset("fire.json")
+                               .set_animation(0)
                                .set_origin(bomb.aabb_.origin_ + glm::vec2(i, j))
                                .get_id();
 
         using namespace std::chrono_literals;
-        event_distributor_.enqueue_event(event::FireTerminated{ fire_id },
-                                         1000ms);
+        event_distributor_.enqueue_event(
+          event::FireTerminated{ fire_id },
+          1000ms + std::chrono::milliseconds{
+                     static_cast<int>(distribution(generator)) });
       }
     }
 
