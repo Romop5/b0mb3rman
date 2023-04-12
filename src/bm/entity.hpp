@@ -22,7 +22,8 @@ public:
   enum Flags
   {
     marked_for_destruction = 0,
-    moved_last_tick = 1,
+    frozen = 1,
+    fireproof = 2,
     last
   };
   using Id = unsigned int;
@@ -72,15 +73,30 @@ public:
     return *this;
   }
 
+  auto set_script_data(unsigned int data) -> Entity&
+  {
+    script_data_ = data;
+    return *this;
+  }
+
   auto get_id() const -> Id { return id_; }
 
 public:
+  // Generics
   Id id_;
+  Type type_;
+  std::bitset<Flags::last> flags_{ 0 };
+
+  // Collision
   utils::AABB aabb_{ glm::vec2{ 0, 0 }, glm::vec2{ 1, 1 } };
 
-  float max_speed_{ 1.0 };
-  glm::vec2 velocity_{ 0.0f, 0.0f };
-  glm::vec2 acceleration_{ 0.0f, 0.0f };
+  // TODO: kinematics
+  struct
+  {
+    float max_speed_{ 1.0 };
+    glm::vec2 velocity_{ 0.0f, 0.0f };
+    glm::vec2 acceleration_{ 0.0f, 0.0f };
+  };
 
   struct Controller
   {
@@ -95,6 +111,7 @@ public:
     }
   } controller_;
 
+  // Visual component
   struct Tile
   {
     std::string tileset_name_{ "default" };
@@ -108,8 +125,8 @@ public:
     std::optional<Animation> animation_;
   } tile_;
 
-  std::bitset<Flags::last> flags_{ 0 };
-  Type type_;
+  // Pickup: type of pickup
+  unsigned int script_data_{ 0 };
 };
 
 } // namespace bm

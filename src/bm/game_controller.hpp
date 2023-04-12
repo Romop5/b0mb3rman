@@ -9,6 +9,7 @@
 #include <bm/entity.hpp>
 #include <bm/event_distributor.hpp>
 #include <bm/events.hpp>
+#include <bm/game_logic.hpp>
 #include <bm/hud_manager.hpp>
 #include <bm/world.hpp>
 
@@ -34,7 +35,8 @@ public:
                                          event::BombExploded,
                                          event::BombPlanted,
                                          event::EntityCollide,
-                                         event::FireTerminated>(*this);
+                                         event::FireTerminated,
+                                         event::PickedPickupItem>(*this);
   }
 
 public:
@@ -47,10 +49,25 @@ public:
       .set_origin({ 0, 0 })
       .set_max_speed(10.0f);
 
-    world_.create(Entity::Type::pickup).set_tile(8).set_origin({ 5, 5 });
-    world_.create(Entity::Type::pickup).set_tile(8).set_origin({ 15, 5 });
-    world_.create(Entity::Type::pickup).set_tile(8).set_origin({ 8, 7 });
-    world_.create(Entity::Type::pickup).set_tile(8).set_origin({ 3, 11 });
+    world_.create(Entity::Type::pickup)
+      .set_tile(8)
+      .set_origin({ 5, 5 })
+      .set_script_data(bm::game_logic::PickupType::increase_bomb_count);
+
+    world_.create(Entity::Type::pickup)
+      .set_tile(8)
+      .set_origin({ 15, 5 })
+      .set_script_data(bm::game_logic::PickupType::increase_bomb_count);
+
+    world_.create(Entity::Type::pickup)
+      .set_tile(8)
+      .set_origin({ 8, 7 })
+      .set_script_data(bm::game_logic::PickupType::increase_bomb_count);
+
+    world_.create(Entity::Type::pickup)
+      .set_tile(8)
+      .set_origin({ 3, 11 })
+      .set_script_data(bm::game_logic::PickupType::increase_bomb_count);
 
     hud_manager_.get_texts().clear();
     hud_manager_.get_texts().create_named(
@@ -202,6 +219,25 @@ public:
     }
   }
 
+  auto handle(const event::PickedPickupItem& event) -> void
+  {
+    if (not world_.has_entity(event.pickup_id) or
+        not world_.has_entity(event.player_id)) {
+      return;
+    }
+
+    auto& pickup = world_.get_entity(event.pickup_id);
+    auto& player = world_.get_entity(event.player_id);
+
+    using namespace bm::game_logic;
+
+    const auto pickup_type = static_cast<PickupType>(pickup.script_data_);
+
+    switch (pickup_type) {
+      case bm::Gam
+    }
+  }
+
   auto handle(const event::EntityCollide& event) -> void
   {
     if (entity_exist(event.actor_a_, event.actor_b_)) {
@@ -211,33 +247,42 @@ public:
       if (entity_a.type_ == Entity::Type::pickup ||
           entity_b.type_ == Entity::Type::pickup) {
         auto& pickup =
-          (entity_a.type_ == Entity::Type::pickup) ? entity_a : entity_b;
+          (entity_a.type_ == Entity::Type::pickup) ? entity_a :
+        entity_b;
         pickup.flags_.set(Entity::Flags::marked_for_destruction);
 
         spdlog::debug("Picked up a pickup");
-      } else if (entity_a.type_ == Entity::Type::fire ||
-                 entity_b.type_ == Entity::Type::fire) {
+    }
+    else if (entity_a.type_ == Entity::Type::fire ||
+             entity_b.type_ == Entity::Type::fire)
+    {
 
-        event_distributor_.enqueue_event(event::PlayerDied{});
-      }
+      event_distributor_.enqueue_event(event::PlayerDied{});
     }
   }
+}
 
-protected:
-  template<typename... Args>
-  auto entity_exist(Entity::Id id, Args... args) -> bool
-  {
-    if constexpr (sizeof...(args) == 0) {
-      return world_.has_entity(id);
-    } else {
-      return entity_exist(args...) && world_.has_entity(id);
-    }
+protected
+  : template<typename... Args>
+    auto
+    entity_exist(Entity::Id id, Args... args) -> bool
+{
+  if constexpr (sizeof...(args) == 0) {
+    return world_.has_entity(id);
+  } else {
+    return entity_exist(args...) && world_.has_entity(id);
   }
+}
 
 private:
-  EventDistributor& event_distributor_;
+EventDistributor& event_distributor_;
 
-  HUDManager& hud_manager_;
-  World& world_;
+HUDManager& hud_manager_;
+World& world_;
+
+struct GameState
+{
+  int bomb_range_distance{ 1 };
+} game_state_;
 };
 } // namespace bm

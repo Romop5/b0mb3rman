@@ -38,10 +38,17 @@ struct BombPlanted
 {};
 struct FireTerminated : public meta::EntityUpdate
 {};
+
 struct EntityCollide
 {
   Entity::Id actor_a_;
   Entity::Id actor_b_;
+};
+
+struct PickedPickupItem
+{
+  Entity::Id pickup_id;
+  Entity::Id player_id;
 };
 
 } // namespace bm::events
