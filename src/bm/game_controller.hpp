@@ -42,32 +42,36 @@ public:
 public:
   auto handle(const event::GameStarted& event) -> void
   {
+
+    using namespace bm::game_logic;
+
     world_.clear();
     world_.create(Entity::Type::player)
       .set_tileset("characters/farmer.json")
       .set_tile(2)
       .set_origin({ 0, 0 })
-      .set_max_speed(10.0f);
+      .set_max_speed(10.0f)
+      .set_data(PlayerData{});
 
     world_.create(Entity::Type::pickup)
       .set_tile(8)
       .set_origin({ 5, 5 })
-      .set_script_data(bm::game_logic::PickupType::increase_bomb_count);
+      .set_data(PickupData{ PickupType::increase_bomb_count });
 
     world_.create(Entity::Type::pickup)
       .set_tile(8)
       .set_origin({ 15, 5 })
-      .set_script_data(bm::game_logic::PickupType::increase_bomb_count);
+      .set_data(PickupData{ PickupType::increase_bomb_count });
 
     world_.create(Entity::Type::pickup)
       .set_tile(8)
       .set_origin({ 8, 7 })
-      .set_script_data(bm::game_logic::PickupType::increase_bomb_count);
+      .set_data(PickupData{ PickupType::increase_bomb_count });
 
     world_.create(Entity::Type::pickup)
       .set_tile(8)
       .set_origin({ 3, 11 })
-      .set_script_data(bm::game_logic::PickupType::increase_bomb_count);
+      .set_data(PickupData{ PickupType::increase_bomb_count });
 
     hud_manager_.get_texts().clear();
     hud_manager_.get_texts().create_named(
@@ -227,14 +231,32 @@ public:
     }
 
     auto& pickup = world_.get_entity(event.pickup_id);
+    pickup.flags_.set(Entity::Flags::marked_for_destruction);
+
     auto& player = world_.get_entity(event.player_id);
 
     using namespace bm::game_logic;
 
-    const auto pickup_type = static_cast<PickupType>(pickup.script_data_);
+    if (not std::holds_alternative<PickupData>(pickup.data_)) {
+      spdlog::warn("Pickup '{}' is not holding pickup data", event.pickup_id);
+      return;
+    }
 
-    switch (pickup_type) {
-      case bm::Gam
+    if (not std::holds_alternative<PlayerData>(player.data_)) {
+      spdlog::warn("Player '{}' is not holding player data", event.player_id);
+      return;
+    }
+
+    const auto& pickup_data = std::get<PickupData>(pickup.data_);
+    auto& player_data = std::get<PlayerData>(player.data_);
+    switch (pickup_data.type_) {
+      case PickupType::increase_bomb_count:
+        player_data.available_bomb_count_++;
+        break;
+      default:
+        spdlog::warn(
+          "Pickup '{}' not used, behavior not defined for pickup type '{}'",
+          static_cast<unsigned>(pickup_data.type_));
     }
   }
 
@@ -247,42 +269,37 @@ public:
       if (entity_a.type_ == Entity::Type::pickup ||
           entity_b.type_ == Entity::Type::pickup) {
         auto& pickup =
-          (entity_a.type_ == Entity::Type::pickup) ? entity_a :
-        entity_b;
-        pickup.flags_.set(Entity::Flags::marked_for_destruction);
+          (entity_a.type_ == Entity::Type::pickup) ? entity_a : entity_b;
+        auto& player =
+          (entity_a.type_ != Entity::Type::pickup) ? entity_a : entity_b;
+
+        event_distributor_.enqueue_event(
+          event::PickedPickupItem{ pickup.get_id(), player.get_id() });
 
         spdlog::debug("Picked up a pickup");
-    }
-    else if (entity_a.type_ == Entity::Type::fire ||
-             entity_b.type_ == Entity::Type::fire)
-    {
+      } else if (entity_a.type_ == Entity::Type::fire ||
+                 entity_b.type_ == Entity::Type::fire) {
 
-      event_distributor_.enqueue_event(event::PlayerDied{});
+        event_distributor_.enqueue_event(event::PlayerDied{});
+      }
     }
   }
-}
 
-protected
-  : template<typename... Args>
-    auto
-    entity_exist(Entity::Id id, Args... args) -> bool
-{
-  if constexpr (sizeof...(args) == 0) {
-    return world_.has_entity(id);
-  } else {
-    return entity_exist(args...) && world_.has_entity(id);
+protected:
+  template<typename... Args>
+  auto entity_exist(Entity::Id id, Args... args) -> bool
+  {
+    if constexpr (sizeof...(args) == 0) {
+      return world_.has_entity(id);
+    } else {
+      return entity_exist(args...) && world_.has_entity(id);
+    }
   }
-}
 
 private:
-EventDistributor& event_distributor_;
+  EventDistributor& event_distributor_;
 
-HUDManager& hud_manager_;
-World& world_;
-
-struct GameState
-{
-  int bomb_range_distance{ 1 };
-} game_state_;
+  HUDManager& hud_manager_;
+  World& world_;
 };
 } // namespace bm

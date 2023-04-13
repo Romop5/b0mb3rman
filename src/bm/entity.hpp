@@ -2,7 +2,9 @@
 
 #include <bitset>
 #include <optional>
+#include <variant>
 
+#include <bm/game_logic.hpp>
 #include <glm/glm.hpp>
 #include <render/tiled_map.hpp>
 #include <utils/aabb.hpp>
@@ -11,6 +13,9 @@ namespace bm {
 struct Entity
 {
 public:
+  using EntityData = std::
+    variant<std::monostate, game_logic::PlayerData, game_logic::PickupData>;
+
   enum Type : uint8_t
   {
     player,
@@ -73,9 +78,9 @@ public:
     return *this;
   }
 
-  auto set_script_data(unsigned int data) -> Entity&
+  auto set_data(EntityData data) -> Entity&
   {
-    script_data_ = data;
+    data_ = data;
     return *this;
   }
 
@@ -91,12 +96,9 @@ public:
   utils::AABB aabb_{ glm::vec2{ 0, 0 }, glm::vec2{ 1, 1 } };
 
   // TODO: kinematics
-  struct
-  {
-    float max_speed_{ 1.0 };
-    glm::vec2 velocity_{ 0.0f, 0.0f };
-    glm::vec2 acceleration_{ 0.0f, 0.0f };
-  };
+  float max_speed_{ 1.0 };
+  glm::vec2 velocity_{ 0.0f, 0.0f };
+  glm::vec2 acceleration_{ 0.0f, 0.0f };
 
   struct Controller
   {
@@ -125,8 +127,7 @@ public:
     std::optional<Animation> animation_;
   } tile_;
 
-  // Pickup: type of pickup
-  unsigned int script_data_{ 0 };
+  EntityData data_;
 };
 
 } // namespace bm
