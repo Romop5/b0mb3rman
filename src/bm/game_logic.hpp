@@ -3,6 +3,12 @@
 namespace bm {
 
 namespace game_logic {
+
+namespace constants {
+constexpr auto fire_effect_duration_mean_ms = 200.0f;
+constexpr auto fire_effect_duration_sigma_ms = 50.0f;
+} // namespace constants
+
 enum PickupType
 {
   increase_bomb_count,
@@ -12,8 +18,8 @@ enum PickupType
 
 struct PlayerData
 {
-  int bomb_range_distance_{ 1 };
-  int available_bomb_count_{ 1 };
+  unsigned int bomb_range_distance_{ 1 };
+  unsigned int available_bomb_count_{ 1 };
 };
 
 struct PickupData
@@ -23,7 +29,8 @@ struct PickupData
 
 struct BombData
 {
-  unsigned int parent_entity_id_{};
+  unsigned int parent_entity_id_;
+  unsigned int range_;
 };
 
 } // namespace bm::game_logic

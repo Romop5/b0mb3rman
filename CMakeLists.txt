@@ -15,6 +15,7 @@ find_package(Freetype REQUIRED)
 add_executable(b0mb3rman 
         src/main.cpp 
         src/bm/game.cpp
+        src/bm/game_controller.cpp
         src/bm/world.cpp
         src/bm/hud_manager.cpp
         src/bm/level.cpp

@@ -13,8 +13,10 @@ namespace bm {
 struct Entity
 {
 public:
-  using EntityData = std::
-    variant<std::monostate, game_logic::PlayerData, game_logic::PickupData>;
+  using EntityData = std::variant<std::monostate,
+                                  game_logic::PlayerData,
+                                  game_logic::PickupData,
+                                  game_logic::BombData>;
 
   enum Type : uint8_t
   {
