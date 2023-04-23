@@ -5,15 +5,45 @@
 #include <glm/glm.hpp>
 
 namespace utils {
+namespace detail {
+
+enum class IntervalComparisonResult
+{
+  a_inside_b,
+  b_inside_a,
+  overlaps,
+  disjoint
+};
+
+template<typename T>
+auto
+compare_intervals(T a, T b) -> IntervalComparisonResult
+{
+  if (a.x <= b.x and a.y >= b.y) {
+    return IntervalComparisonResult::b_inside_a;
+  } else if (a.x >= b.x and a.y <= b.y) {
+    return IntervalComparisonResult::a_inside_b;
+  } else if ((a.x < b.x and a.y < b.y) or (a.x > b.x and a.y > b.y)) {
+    return IntervalComparisonResult::disjoint;
+  }
+  return IntervalComparisonResult::overlaps;
+}
+
+} // namespace utils::detail
+
 struct AABB
 {
+public:
   AABB() = default;
   AABB(glm::vec2 origin, glm::vec2 size)
     : origin_{ origin }
     , size_{ size }
   {
   }
-
+  auto get_midpoint() const -> glm::vec2
+  {
+    return origin_ + size_ * glm::vec2(0.5);
+  }
   auto get_top_left() const -> glm::vec2 { return origin_; }
   auto get_top_right() const -> glm::vec2
   {
@@ -64,6 +94,38 @@ struct AABB
         return false;
     }
     return true;
+  }
+
+  auto contains(const glm::vec2& point) const -> bool
+  {
+    const auto this_x = project_x();
+    const auto this_y = project_y();
+    return ((point.x >= this_x[0] and point.x <= this_x[1]) and
+            (point.y >= this_y[0] and point.y <= this_y[1]));
+  }
+
+  auto inside(const AABB& boundary) const -> bool
+  {
+    using namespace detail;
+    const auto this_x = project_x();
+    const auto this_y = project_y();
+
+    const auto other_x = project_x();
+    const auto other_y = project_y();
+
+    if ((compare_intervals(this_x, other_x) ==
+         IntervalComparisonResult::a_inside_b) and
+        (compare_intervals(this_y, other_y) ==
+         IntervalComparisonResult::a_inside_b)) {
+      return true;
+    }
+    return false;
+  }
+
+  auto put_inside(const AABB& boundary) -> void
+  {
+    origin_ = glm::max(origin_, boundary.origin_);
+    origin_ = glm::min(origin_, boundary.get_bottom_right() - size_);
   }
 
   auto distance_l2(const AABB& other) const

@@ -15,15 +15,15 @@
 namespace render {
 
 class Application
-  : public interfaces::IInputListener
-  , public interfaces::IRenderableObserver
+  : public render::interfaces::IInputListener
+  , public render::interfaces::IRenderableObserver
 
 {
 public:
   class Settings
   {};
 
-  explicit Application(interfaces::IRenderable& renderable);
+  explicit Application(render::interfaces::IRenderable& renderable);
 
   auto run() -> void;
   auto stop() -> void;
@@ -39,7 +39,7 @@ public:
     -> void override;
 
 private:
-  interfaces::IRenderable& renderable_;
+  render::interfaces::IRenderable& renderable_;
   std::atomic<bool> is_running_{ true };
 };
 

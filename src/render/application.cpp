@@ -8,7 +8,7 @@
 
 using namespace render;
 
-Application::Application(interfaces::IRenderable& renderable)
+Application::Application(render::interfaces::IRenderable& renderable)
   : renderable_{ renderable }
 {
 }

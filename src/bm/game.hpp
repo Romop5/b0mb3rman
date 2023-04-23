@@ -61,6 +61,7 @@ private:
   /// @brief Manages game dynamics (update of entites & map)
   GameController game_controller_;
 
+  /// @brief Owns current game map / multimedia resources
   std::unique_ptr<Level> level_;
 };
 

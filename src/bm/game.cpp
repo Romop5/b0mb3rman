@@ -34,7 +34,7 @@ load_tile_renderer_program(std::filesystem::path assets) -> render::Program
 }
 } // namespace
 
-Game::Game(interfaces::IRenderable& renderable, Settings settings)
+Game::Game(render::interfaces::IRenderable& renderable, Settings settings)
   : Application{ renderable }
   , settings_{ settings }
   , viewport_{}
@@ -188,6 +188,22 @@ Game::load_level() -> void
   const auto& assets = settings_.assets_directory;
   const auto level_settings = utils::read_json(assets / settings_.level);
   level_ = std::make_unique<Level>(assets, level_settings);
+  world_.update_boundary(
+    glm::vec2(0, 0), glm::vec2(level_->map_->count_x, level_->map_->count_y));
+
+  utils::OccupancyMap2D<bool> static_collision_map{
+    { level_->map_->count_x, level_->map_->count_y }, false
+  };
+
+  const auto& tile_map =
+    std::get<render::TiledMap::TileLayer>(level_->map_->layers_.at(0).data_);
+
+  std::transform(tile_map.tile_indices_.begin(),
+                 tile_map.tile_indices_.end(),
+                 static_collision_map.begin(),
+                 [](auto tile_id) { return (tile_id != 0); });
+
+  world_.update_static_collisions(std::move(static_collision_map));
   start();
 }
 

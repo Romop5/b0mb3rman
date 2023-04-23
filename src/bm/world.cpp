@@ -88,8 +88,67 @@ World::update(std::chrono::milliseconds delta) -> void
 
   /* Update positions */
   for (auto& [id, entity] : entities_) {
+    if (entity.flags_.test(Entity::Flags::frozen)) {
+      continue;
+    }
+
     const auto position_delta = elapsed_seconds * entity.velocity_;
-    entity.aabb_.origin_ += position_delta;
+    if (glm::length(position_delta) < 1e-4) {
+      continue;
+    }
+
+    /*const auto new_position_x =
+      entity.aabb_.origin_ + glm::vec2(position_delta.x, 0);
+    const auto new_position_y =
+      entity.aabb_.origin_ + glm::vec2(0, position_delta.y);
+    const auto new_position_xy = entity.aabb_.origin_ + position_delta;
+    */
+
+    /*auto generate_potential_collision_ids(glm::vec2 pos)
+      ->std::array<4, glm::vec2>
+    {
+    }*/
+
+    std::array<glm::vec2, 4> test_cells_during_movement{
+      glm::vec2(0, 0),
+      glm::vec2(entity.aabb_.size_.x, 0),
+      glm::vec2(0, entity.aabb_.size_.y),
+      glm::vec2(entity.aabb_.size_),
+    };
+
+    glm::vec2 update_delta = position_delta;
+    {
+      // test move left or right
+      const auto new_position =
+        entity.aabb_.origin_ + glm::vec2(position_delta.x, 0);
+
+      for (const auto& cell : test_cells_during_movement) {
+        const auto cell_position = new_position + cell;
+        if (has_static_collision(cell_position)) {
+          update_delta.x = 0;
+          break;
+        }
+      }
+    }
+    {
+      // test move left or right
+      const auto new_position =
+        entity.aabb_.origin_ + glm::vec2(0, position_delta.y);
+
+      for (const auto& cell : test_cells_during_movement) {
+        const auto cell_position = new_position + cell;
+        if (has_static_collision(cell_position)) {
+          update_delta.y = 0;
+          break;
+        }
+      }
+    }
+
+    entity.aabb_.origin_ += update_delta;
+
+    if (not entity.flags_.test(Entity::Flags::unbounded)) {
+      entity.aabb_.put_inside(boundary_);
+    }
 
     if (glm::length(position_delta) > 0.01) {
       spdlog::trace("Updated entity {} to position ({},{}) (delta: {},{})",
@@ -110,6 +169,56 @@ World::update(std::chrono::milliseconds delta) -> void
   }
 
   detect_collisions();
+}
+auto
+World::update_boundary(glm::vec2 top_left, glm::vec2 bottom_right) -> void
+{
+  const auto origin = top_left;
+  const auto size = bottom_right - top_left;
+  boundary_ = utils::AABB{ origin, size };
+}
+
+auto
+World::update_static_collisions(utils::OccupancyMap2D<bool> map) -> void
+{
+  static_collisions_ = std::move(map);
+}
+
+auto
+World::is_out_of_bounds(unsigned int x, unsigned int y) -> bool
+{
+  return !boundary_.contains(glm::vec2{ x, y });
+}
+
+auto
+World::is_cell_occupied(unsigned int x, unsigned int y) -> bool
+{
+  if (has_static_collision(x, y)) {
+    return true;
+  }
+
+  utils::AABB cell_aabb{ glm::vec2(x, y), glm::vec2(1.0f, 1.0f) };
+  for (const auto& [id, entity] : entities_) {
+    if (entity.aabb_.collide(cell_aabb))
+      return true;
+  }
+  return false;
+}
+
+auto
+World::has_static_collision(unsigned int x, unsigned int y) -> bool
+{
+  return has_static_collision(glm::vec2(x, y));
+}
+
+auto
+World::has_static_collision(glm::vec2 pos) -> bool
+{
+  auto floor_pos = glm::floor(pos);
+  if (is_out_of_bounds(floor_pos.x, floor_pos.y)) {
+    return false;
+  }
+  return static_collisions_.at({ floor_pos.x, floor_pos.y });
 }
 
 auto

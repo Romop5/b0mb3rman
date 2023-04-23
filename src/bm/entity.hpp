@@ -29,8 +29,9 @@ public:
   enum Flags
   {
     marked_for_destruction = 0,
-    frozen = 1,
-    fireproof = 2,
+    unbounded = 1,
+    frozen = 2,
+    fireproof = 3,
     last
   };
   using Id = unsigned int;
@@ -83,6 +84,12 @@ public:
   auto set_data(EntityData data) -> Entity&
   {
     data_ = data;
+    return *this;
+  }
+
+  auto set_flags(Entity::Flags flag) -> Entity&
+  {
+    flags_.set(flag);
     return *this;
   }
 

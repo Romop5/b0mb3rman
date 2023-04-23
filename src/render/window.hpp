@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <optional>
+#include <vector>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -15,18 +15,18 @@
 namespace render {
 
 class Window
-  : public interfaces::IRenderable
-  , public interfaces::IRenderableObserver
-  , public interfaces::IInputListener
+  : public render::interfaces::IRenderable
+  , public render::interfaces::IRenderableObserver
+  , public render::interfaces::IInputListener
   , public std::enable_shared_from_this<Window>
 {
 public:
   Window();
 
   auto register_callbacks() -> void;
-  auto set_renderable_observer(interfaces::IRenderableObserver& observer)
-    -> void;
-  auto set_input_observer(interfaces::IInputListener& observer) -> void;
+  auto set_renderable_observer(
+    render::interfaces::IRenderableObserver& observer) -> void;
+  auto set_input_observer(render::interfaces::IInputListener& observer) -> void;
 
   /* IRenderable*/
   auto swap_buffers() -> void override;
@@ -43,9 +43,9 @@ private:
   utils::RaiiAction glfw_delete_system_;
   utils::RaiiOwnership<GLFWwindow> window_;
   utils::ManagerRaiiHandle<Window> window_handler_;
-  std::optional<std::reference_wrapper<interfaces::IRenderableObserver>>
+  std::optional<std::reference_wrapper<render::interfaces::IRenderableObserver>>
     observer_renderable_;
-  std::optional<std::reference_wrapper<interfaces::IInputListener>>
+  std::optional<std::reference_wrapper<render::interfaces::IInputListener>>
     observer_inputlistener_;
 };
 

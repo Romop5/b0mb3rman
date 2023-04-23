@@ -57,13 +57,14 @@ render::Window::register_callbacks() -> void
 
 auto
 render::Window::set_renderable_observer(
-  interfaces::IRenderableObserver& observer) -> void
+  render::interfaces::IRenderableObserver& observer) -> void
 {
   observer_renderable_ = observer;
 }
 
 auto
-render::Window::set_input_observer(interfaces::IInputListener& observer) -> void
+render::Window::set_input_observer(render::interfaces::IInputListener& observer)
+  -> void
 {
   observer_inputlistener_ = observer;
 }

@@ -12,7 +12,8 @@ GameController::handle(const event::GameStarted& event) -> void
   world_.create(Entity::Type::player)
     .set_tileset("characters/farmer.json")
     .set_tile(2)
-    .set_origin({ 0, 0 })
+    .set_origin({ 5, 0 })
+    .set_size({ 0.7, 0.7 })
     .set_max_speed(10.0f)
     .set_data(PlayerData{});
 
@@ -42,7 +43,7 @@ GameController::handle(const event::GameStarted& event) -> void
 
   hud_manager_.get_texts()
     .get_or_create_default("status")
-    .set_text("Okay, let's gos!")
+    .set_text("Okay, let's go!")
     .set_fade_effect(HUDManager::Text::FadingEffect(2));
 }
 
@@ -51,6 +52,10 @@ GameController::handle(const event::PlayerMoved& event) -> void
 {
   if (const auto player_id = world_.get_player_id()) {
     auto& player = world_.get_entity(player_id.value());
+
+    if (player.flags_.test(Entity::Flags::frozen)) {
+      return;
+    }
 
     auto update_visual = [&](unsigned int movement_category) {
       if (event.should_accelerate) {
@@ -99,7 +104,7 @@ GameController::handle(const event::PlayerDied& event) -> void
 {
   if (const auto player_id = world_.get_player_id()) {
     auto& player = world_.get_entity(player_id.value());
-    player.flags_.set(Entity::Flags::marked_for_destruction);
+    player.set_flags(Entity::Flags::marked_for_destruction);
   }
 
   hud_manager_.get_texts()
@@ -137,7 +142,41 @@ GameController::handle(const event::BombExploded& event) -> void
     constants::fire_effect_duration_mean_ms,
     constants::fire_effect_duration_sigma_ms);
 
+  std::vector<glm::ivec2> directions = {
+    { 0, 1 },
+    { 0, -1 },
+    { 1, 0 },
+    { -1, 0 },
+  };
+
   int range = bomb_data.range_;
+  const auto initial_origin =
+    glm::ivec2(bomb.aabb_.origin_.x, bomb.aabb_.origin_.y);
+  for (const auto direction : directions) {
+    for (size_t i = 1; i <= range; i++) {
+      const auto pose = initial_origin + direction * glm::ivec2(i);
+      if (world_.is_out_of_bounds(pose.x, pose.y)) {
+        continue;
+      }
+
+      const auto fire_id = world_.create(Entity::Type::fire)
+                             .set_tileset("fire.json")
+                             .set_animation(0)
+                             .set_origin(pose)
+                             .get_id();
+
+      using namespace std::chrono_literals;
+      event_distributor_.enqueue_event(
+        event::FireTerminated{ fire_id },
+        1000ms + std::chrono::milliseconds{
+                   static_cast<int>(distribution(generator)) });
+
+      if (world_.is_cell_occupied(pose.x, pose.y)) {
+        break;
+      }
+    }
+  }
+
   for (signed int i = -range; i <= range; i++) {
     for (signed int j = -range; j <= range; j++) {
       const auto fire_id = world_.create(Entity::Type::fire)
