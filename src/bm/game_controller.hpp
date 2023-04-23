@@ -49,6 +49,10 @@ public:
   auto handle(const event::PickedPickupItem& event) -> void;
   auto handle(const event::EntityCollide& event) -> void;
 
+protected:
+  auto spawn_temporary_fire(glm::vec2 position,
+                            std::chrono::milliseconds duration) -> Entity::Id;
+
 private:
   template<typename... Args>
   auto entity_exist(Entity::Id id, Args... args) -> bool;

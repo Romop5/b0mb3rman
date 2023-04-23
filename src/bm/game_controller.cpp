@@ -33,9 +33,19 @@ GameController::handle(const event::GameStarted& event) -> void
     .set_data(PickupData{ PickupType::increase_bomb_count });
 
   world_.create(Entity::Type::pickup)
-    .set_tile(8)
+    .set_tile(9)
     .set_origin({ 3, 11 })
-    .set_data(PickupData{ PickupType::increase_bomb_count });
+    .set_data(PickupData{ PickupType::increase_bomb_range });
+
+  world_.create(Entity::Type::pickup)
+    .set_tile(9)
+    .set_origin({ 2, 15 })
+    .set_data(PickupData{ PickupType::increase_bomb_range });
+
+  world_.create(Entity::Type::pickup)
+    .set_tile(9)
+    .set_origin({ 2, 16 })
+    .set_data(PickupData{ PickupType::increase_bomb_range });
 
   hud_manager_.get_texts().clear();
   hud_manager_.get_texts().create_named(
@@ -142,64 +152,40 @@ GameController::handle(const event::BombExploded& event) -> void
     constants::fire_effect_duration_mean_ms,
     constants::fire_effect_duration_sigma_ms);
 
-  std::vector<glm::ivec2> directions = {
-    { 0, 1 },
-    { 0, -1 },
-    { 1, 0 },
-    { -1, 0 },
+  const auto spawn_range = bomb_data.range_;
+  const std::vector<std::pair<glm::ivec2, float>> directions = {
+    { glm::ivec2{ 0, 0 }, 1 },
+    { glm::ivec2{ 0, 1 }, spawn_range },
+    { glm::ivec2{ 0, -1 }, spawn_range },
+    { glm::ivec2{ 1, 0 }, spawn_range },
+    { glm::ivec2{ -1, 0 }, spawn_range }
   };
 
-  int range = bomb_data.range_;
   const auto initial_origin =
     glm::ivec2(bomb.aabb_.origin_.x, bomb.aabb_.origin_.y);
-  for (const auto direction : directions) {
+
+  for (const auto [direction, range] : directions) {
     for (size_t i = 1; i <= range; i++) {
       const auto pose = initial_origin + direction * glm::ivec2(i);
-      if (world_.is_out_of_bounds(pose.x, pose.y)) {
-        continue;
+      if (world_.has_static_collision(pose.x, pose.y)) {
+        break;
       }
 
-      const auto fire_id = world_.create(Entity::Type::fire)
-                             .set_tileset("fire.json")
-                             .set_animation(0)
-                             .set_origin(pose)
-                             .get_id();
+      bool affects_dynamic_object = world_.is_cell_occupied(pose.x, pose.y);
 
       using namespace std::chrono_literals;
-      event_distributor_.enqueue_event(
-        event::FireTerminated{ fire_id },
-        1000ms + std::chrono::milliseconds{
-                   static_cast<int>(distribution(generator)) });
+      const auto duration =
+        1000ms +
+        std::chrono::milliseconds{ static_cast<int>(distribution(generator)) };
 
-      if (world_.is_cell_occupied(pose.x, pose.y)) {
+      spawn_temporary_fire(pose, duration);
+      if (affects_dynamic_object) {
         break;
       }
     }
   }
 
-  for (signed int i = -range; i <= range; i++) {
-    for (signed int j = -range; j <= range; j++) {
-      const auto fire_id = world_.create(Entity::Type::fire)
-                             .set_tileset("fire.json")
-                             .set_animation(0)
-                             .set_origin(bomb.aabb_.origin_ + glm::vec2(i, j))
-                             .get_id();
-
-      using namespace std::chrono_literals;
-      event_distributor_.enqueue_event(
-        event::FireTerminated{ fire_id },
-        1000ms + std::chrono::milliseconds{
-                   static_cast<int>(distribution(generator)) });
-    }
-  }
-
-  /*const auto player_id = world_.get_player_id();
-  if (player_id) {
-    auto& player = world_.get_entity(player_id.value());
-    if (player.aabb_.distance_l1(bomb.aabb_) < 5) {
-      event_distributor_.enqueue_event(event::PlayerDied{});
-    }
-  }*/
+  spdlog::trace("Bomb exploded with range: {}", spawn_range);
 
   hud_manager_.get_texts()
     .get_or_create_default("status")
@@ -247,7 +233,12 @@ GameController::handle(const event::BombPlanted& event) -> void
     using namespace std::chrono_literals;
     event_distributor_.enqueue_event(event::BombExploded{ bomb_id }, 2000ms);
 
-    spdlog::trace("Planting bomb at ({}, {})", coords.x, coords.y);
+    spdlog::trace(
+      "Planting bomb at ({}, {}), with range ({}), remaining bombs ({})",
+      coords.x,
+      coords.y,
+      player_data.bomb_range_distance_,
+      player_data.available_bomb_count_);
 
     hud_manager_.get_texts()
       .get_or_create_default("status")
@@ -322,6 +313,26 @@ GameController::handle(const event::EntityCollide& event) -> void
       event_distributor_.enqueue_event(event::PlayerDied{});
     }
   }
+}
+
+auto
+GameController::spawn_temporary_fire(glm::vec2 position,
+                                     std::chrono::milliseconds duration)
+  -> Entity::Id
+{
+  const auto fire_id = world_.create(Entity::Type::fire)
+                         .set_tileset("fire.json")
+                         .set_animation(0)
+                         .set_origin(position)
+                         .get_id();
+
+  event_distributor_.enqueue_event(event::FireTerminated{ fire_id }, duration);
+
+  spdlog::trace("spawn_temporary_fire: pose ({}, {}), duration: {}",
+                position.x,
+                position.y,
+                duration.count());
+  return fire_id;
 }
 
 template<typename... Args>

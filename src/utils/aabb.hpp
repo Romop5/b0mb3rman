@@ -79,7 +79,7 @@ public:
       if (a_x[1] <= b_x[0])
         return false;
     } else {
-      if (a_x[0] > b_x[1])
+      if (a_x[0] >= b_x[1])
         return false;
     }
 
@@ -90,7 +90,7 @@ public:
       if (a_y[1] <= b_y[0])
         return false;
     } else {
-      if (a_y[0] > b_y[1])
+      if (a_y[0] >= b_y[1])
         return false;
     }
     return true;
