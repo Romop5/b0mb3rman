@@ -124,7 +124,7 @@ World::update(std::chrono::milliseconds delta) -> void
 
       for (const auto& cell : test_cells_during_movement) {
         const auto cell_position = new_position + cell;
-        if (has_static_collision(cell_position)) {
+        if (is_point_colliding(cell_position, entity.collision_mask_)) {
           update_delta.x = 0;
           break;
         }
@@ -137,7 +137,7 @@ World::update(std::chrono::milliseconds delta) -> void
 
       for (const auto& cell : test_cells_during_movement) {
         const auto cell_position = new_position + cell;
-        if (has_static_collision(cell_position)) {
+        if (is_point_colliding(cell_position, entity.collision_mask_)) {
           update_delta.y = 0;
           break;
         }
@@ -185,20 +185,42 @@ World::update_static_collisions(utils::OccupancyMap2D<bool> map) -> void
 }
 
 auto
-World::is_out_of_bounds(unsigned int x, unsigned int y) -> bool
+World::is_out_of_bounds(glm::vec2 position) -> bool
 {
-  return !boundary_.contains(glm::vec2{ x, y });
+  return !boundary_.contains(position);
 }
 
 auto
-World::is_cell_occupied(unsigned int x, unsigned int y) -> bool
+World::is_point_colliding(glm::vec2 position, Entity::TypeMask allowed_types)
+  -> bool
 {
-  if (has_static_collision(x, y)) {
+  if (has_static_collision(position)) {
     return true;
   }
 
-  utils::AABB cell_aabb{ glm::vec2(x, y), glm::vec2(1.0f, 1.0f) };
   for (const auto& [id, entity] : entities_) {
+    if (not entity.flags_.test(Entity::Flags::frozen) or
+        not allowed_types.test(entity.get_type()))
+      continue;
+    if (entity.aabb_.contains(position))
+      return true;
+  }
+  return false;
+}
+
+auto
+World::is_cell_occupied(glm::vec2 position, Entity::TypeMask allowed_types)
+  -> bool
+{
+  if (has_static_collision(position)) {
+    return true;
+  }
+
+  utils::AABB cell_aabb{ position, glm::vec2(1.0f, 1.0f) };
+  for (const auto& [id, entity] : entities_) {
+    if (not entity.flags_.test(Entity::Flags::frozen) or
+        not allowed_types.test(entity.get_type()))
+      continue;
     if (entity.aabb_.collide(cell_aabb))
       return true;
   }
@@ -206,19 +228,14 @@ World::is_cell_occupied(unsigned int x, unsigned int y) -> bool
 }
 
 auto
-World::has_static_collision(unsigned int x, unsigned int y) -> bool
-{
-  return has_static_collision(glm::vec2(x, y));
-}
-
-auto
 World::has_static_collision(glm::vec2 pos) -> bool
 {
   auto floor_pos = glm::floor(pos);
-  if (is_out_of_bounds(floor_pos.x, floor_pos.y)) {
+  if (is_out_of_bounds(floor_pos)) {
     return false;
   }
-  return static_collisions_.at({ floor_pos.x, floor_pos.y });
+  return static_collisions_.at({ static_cast<unsigned int>(floor_pos.x),
+                                 static_cast<unsigned int>(floor_pos.y) });
 }
 
 auto

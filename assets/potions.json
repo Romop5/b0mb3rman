@@ -1,0 +1,15 @@
+{ "columns":7,
+ "image":"potions.png",
+ "imageheight":30,
+ "imagewidth":255,
+ "margin":0,
+ "name":"potions",
+ "spacing":0,
+ "tilecount":7,
+ "tiledversion":"1.9.2",
+ "tileheight":30,
+ "tilewidth":32,
+ "transparentcolor":"#000000",
+ "type":"tileset",
+ "version":"1.9"
+}

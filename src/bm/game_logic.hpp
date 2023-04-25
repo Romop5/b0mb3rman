@@ -14,6 +14,7 @@ enum PickupType
   increase_bomb_count,
   increase_bomb_range,
   freeze_for_some_time,
+  last
 };
 
 struct PlayerData

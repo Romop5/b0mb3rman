@@ -13,12 +13,15 @@
 #include <bm/event_distributor.hpp>
 #include <bm/game_controller.hpp>
 #include <bm/hud_manager.hpp>
+#include <bm/interfaces/game.hpp>
 #include <bm/level.hpp>
 #include <bm/world.hpp>
 
 namespace bm {
 
-class Game : public render::Application
+class Game
+  : public render::Application
+  , public bm::interfaces::IGame
 {
 public:
   struct Settings
@@ -31,6 +34,9 @@ public:
 
 public:
   explicit Game(render::interfaces::IRenderable& renderable, Settings settings);
+
+  /* IGame */
+  auto get_current_level() const -> const bm::Level* override;
 
 protected:
   virtual auto on_render(std::chrono::milliseconds delta)

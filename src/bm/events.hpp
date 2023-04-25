@@ -17,6 +17,9 @@ struct GameStarted
 {};
 
 /* Entity-related events*/
+struct DeleteEntity : public meta::EntityUpdate
+{};
+
 struct PlayerMoved
 {
   bool should_accelerate;
@@ -30,6 +33,12 @@ struct PlayerMoved
 };
 
 struct PlayerDied : public meta::EntityUpdate
+{};
+
+struct ParticleDestroyed : public meta::EntityUpdate
+{};
+
+struct CrateDestroyed : public meta::EntityUpdate
 {};
 
 struct BombExploded : public meta::EntityUpdate

@@ -39,11 +39,14 @@ public:
   auto update_static_collisions(utils::OccupancyMap2D<bool> map) -> void;
 
   /* ICollisionWorld */
-  auto is_out_of_bounds(unsigned int x, unsigned int y) -> bool override final;
-  auto is_cell_occupied(unsigned int x, unsigned int y) -> bool override final;
-  auto has_static_collision(unsigned int x, unsigned int y)
-    -> bool override final;
-  auto has_static_collision(glm::vec2 position) -> bool;
+  auto is_out_of_bounds(glm::vec2 position) -> bool override final;
+  auto is_point_colliding(glm::vec2 position,
+                          Entity::TypeMask allowed_types = Entity::TypeMask{
+                            ~0lu }) -> bool;
+  auto is_cell_occupied(glm::vec2 position,
+                        Entity::TypeMask allowed_types = Entity::TypeMask{
+                          ~0lu }) -> bool override final;
+  auto has_static_collision(glm::vec2 position) -> bool override final;
 
 protected:
   auto detect_collisions() -> void;

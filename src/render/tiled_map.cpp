@@ -115,6 +115,45 @@ TiledMap::tile(const glm::ivec2 position, size_t layer_id) const -> TileIndex
 }
 
 auto
+TiledMap::has_layer(const std::string& name) const -> bool
+{
+  const auto it =
+    std::find_if(layers_.begin(), layers_.end(), [&](const auto& layer) {
+      return layer.name_ == name;
+    });
+  return it != layers_.end();
+}
+
+auto
+TiledMap::get_layer(const std::string& name) const -> const Layer&
+{
+  const auto it =
+    std::find_if(layers_.begin(), layers_.end(), [&](const auto& layer) {
+      return layer.name_ == name;
+    });
+
+  if (it == layers_.end()) {
+    throw std::runtime_error(fmt::format("Missing layer {}", name));
+  }
+  return *it;
+}
+
+auto
+TiledMap::iterate_tile_layer(const TileLayer& tile_layer,
+                             TileLayerIterator iterator) -> void
+{
+  const auto& indices = tile_layer.tile_indices_;
+  for (size_t i = 0; i < indices.size(); i++) {
+    const auto index = indices.at(i);
+    if (index == TiledMap::invalid_index) {
+      continue;
+    }
+    const auto position = glm::ivec2(i % count_x, i / count_x);
+    iterator(position, index);
+  }
+}
+
+auto
 TiledMap::assert_position(const glm::ivec2 position) const -> void
 {
   if (position.x >= count_x or position.y >= count_y) {

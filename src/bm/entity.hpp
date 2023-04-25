@@ -24,7 +24,11 @@ public:
     bomb,
     pickup,
     fire,
+    crate,
+    particle,
+    last_type
   };
+  using TypeMask = std::bitset<Type::last_type>;
 
   enum Flags
   {
@@ -32,8 +36,10 @@ public:
     unbounded = 1,
     frozen = 2,
     fireproof = 3,
-    last
+    last_flag
   };
+  using FlagsBitset = std::bitset<Flags::last_flag>;
+
   using Id = unsigned int;
 
 public:
@@ -46,6 +52,18 @@ public:
   auto set_max_speed(float value) -> Entity&
   {
     max_speed_ = value;
+    return *this;
+  }
+
+  auto set_collision_mask(TypeMask mask) -> Entity&
+  {
+    collision_mask_ = mask;
+    return *this;
+  }
+
+  auto set_collision_mask_bit(Type bit) -> Entity&
+  {
+    collision_mask_.set(static_cast<unsigned>(bit));
     return *this;
   }
 
@@ -89,20 +107,22 @@ public:
 
   auto set_flags(Entity::Flags flag) -> Entity&
   {
-    flags_.set(flag);
+    flags_.set(static_cast<unsigned>(flag));
     return *this;
   }
 
   auto get_id() const -> Id { return id_; }
+  auto get_type() const -> Type { return type_; }
 
 public:
   // Generics
   Id id_;
   Type type_;
-  std::bitset<Flags::last> flags_{ 0 };
+  FlagsBitset flags_{ 0 };
 
   // Collision
   utils::AABB aabb_{ glm::vec2{ 0, 0 }, glm::vec2{ 1, 1 } };
+  TypeMask collision_mask_{ 0 };
 
   // TODO: kinematics
   float max_speed_{ 1.0 };

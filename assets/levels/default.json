@@ -1,5 +1,10 @@
 {
   "tileset_name": "cavesofgallet_tiles.json",
   "tilemap_path": "map.json",
-  "tilesets": ["characters/farmer.json", "fire.json"]
+  "tilesets": [
+    "characters/farmer.json",
+    "fire.json",
+    "crate.json",
+    "potions.json"
+  ]
 }

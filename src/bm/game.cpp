@@ -46,9 +46,18 @@ Game::Game(render::interfaces::IRenderable& renderable, Settings settings)
   , hud_manager_{ font_renderer_ }
   , event_distributor_{}
   , world_{ event_distributor_ }
-  , game_controller_{ event_distributor_, hud_manager_, world_ }
+  , game_controller_{ *this, event_distributor_, hud_manager_, world_ }
 {
   load_level();
+}
+
+auto
+Game::get_current_level() const -> const bm::Level*
+{
+  if (level_) {
+    return level_.get();
+  }
+  return nullptr;
 }
 
 auto

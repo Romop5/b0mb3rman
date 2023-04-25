@@ -2,14 +2,28 @@
 
 using namespace bm;
 
+namespace {
+struct pair_hash
+{
+  template<class T1, class T2>
+  std::size_t operator()(const std::pair<T1, T2>& pair) const
+  {
+    return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+  }
+};
+} // namespace
+
 auto
 GameController::handle(const event::GameStarted& event) -> void
 {
-
   using namespace bm::game_logic;
 
+  event_distributor_.clear();
   world_.clear();
   world_.create(Entity::Type::player)
+    .set_collision_mask_bit(Entity::Type::player)
+    .set_collision_mask_bit(Entity::Type::bomb)
+    .set_collision_mask_bit(Entity::Type::crate)
     .set_tileset("characters/farmer.json")
     .set_tile(2)
     .set_origin({ 5, 0 })
@@ -17,35 +31,23 @@ GameController::handle(const event::GameStarted& event) -> void
     .set_max_speed(10.0f)
     .set_data(PlayerData{});
 
-  world_.create(Entity::Type::pickup)
-    .set_tile(8)
-    .set_origin({ 5, 5 })
-    .set_data(PickupData{ PickupType::increase_bomb_count });
+  if (auto level = game_.get_current_level()) {
+    const auto boxes_layer_name = "boxes";
+    if (not level->map_->has_layer(boxes_layer_name)) {
+      spdlog::error("Missing layer {} that defines positions of boxes!",
+                    boxes_layer_name);
+    } else {
+      const auto& layer = level->map_->get_layer(boxes_layer_name);
+      if (std::holds_alternative<render::TiledMap::TileLayer>(layer.data_)) {
+        const auto& tile_layer =
+          std::get<render::TiledMap::TileLayer>(layer.data_);
 
-  world_.create(Entity::Type::pickup)
-    .set_tile(8)
-    .set_origin({ 15, 5 })
-    .set_data(PickupData{ PickupType::increase_bomb_count });
-
-  world_.create(Entity::Type::pickup)
-    .set_tile(8)
-    .set_origin({ 8, 7 })
-    .set_data(PickupData{ PickupType::increase_bomb_count });
-
-  world_.create(Entity::Type::pickup)
-    .set_tile(9)
-    .set_origin({ 3, 11 })
-    .set_data(PickupData{ PickupType::increase_bomb_range });
-
-  world_.create(Entity::Type::pickup)
-    .set_tile(9)
-    .set_origin({ 2, 15 })
-    .set_data(PickupData{ PickupType::increase_bomb_range });
-
-  world_.create(Entity::Type::pickup)
-    .set_tile(9)
-    .set_origin({ 2, 16 })
-    .set_data(PickupData{ PickupType::increase_bomb_range });
+        level->map_->iterate_tile_layer(
+          tile_layer,
+          [&](auto position, auto index) { spawn_crate(glm::vec2(position)); });
+      }
+    }
+  }
 
   hud_manager_.get_texts().clear();
   hud_manager_.get_texts().create_named(
@@ -55,6 +57,16 @@ GameController::handle(const event::GameStarted& event) -> void
     .get_or_create_default("status")
     .set_text("Okay, let's go!")
     .set_fade_effect(HUDManager::Text::FadingEffect(2));
+}
+
+auto
+GameController::handle(const event::DeleteEntity& event) -> void
+{
+  if (not world_.has_entity(event.actor_)) {
+    return;
+  }
+  auto& entity = world_.get_entity(event.actor_);
+  entity.set_flags(Entity::Flags::marked_for_destruction);
 }
 
 auto
@@ -112,9 +124,14 @@ GameController::handle(const event::PlayerMoved& event) -> void
 auto
 GameController::handle(const event::PlayerDied& event) -> void
 {
+  using namespace std::chrono_literals;
   if (const auto player_id = world_.get_player_id()) {
     auto& player = world_.get_entity(player_id.value());
-    player.set_flags(Entity::Flags::marked_for_destruction);
+    player.set_flags(Entity::Flags::frozen);
+    player.set_animation(1);
+    spawn_particle(player.aabb_.origin_, 500ms).set_size(glm::vec2(1.5f));
+    event_distributor_.enqueue_event(event::DeleteEntity{ player_id.value() },
+                                     500ms);
   }
 
   hud_manager_.get_texts()
@@ -123,8 +140,33 @@ GameController::handle(const event::PlayerDied& event) -> void
     .set_fade_effect(HUDManager::Text::FadingEffect{ 2 })
     .set_wave_effect(HUDManager::Text::WaveEffect{ 0, 3 });
 
-  using namespace std::chrono_literals;
   event_distributor_.enqueue_event(event::GameStarted{}, 2000ms);
+}
+
+auto
+GameController::handle(const event::ParticleDestroyed& event) -> void
+{
+  if (not entity_exist(event.actor_)) {
+    return;
+  }
+
+  auto& crate = world_.get_entity(event.actor_);
+  crate.set_flags(Entity::Flags::marked_for_destruction);
+  spdlog::trace("particle {} destroyed", event.actor_);
+}
+
+auto
+GameController::handle(const event::CrateDestroyed& event) -> void
+{
+  if (not entity_exist(event.actor_)) {
+    return;
+  }
+
+  auto& crate = world_.get_entity(event.actor_);
+  crate.set_flags(Entity::Flags::marked_for_destruction);
+  spdlog::trace("Crate {} destroyed", event.actor_);
+
+  spawn_pickup(crate.aabb_.origin_, compute_random_pickup_type());
 }
 
 auto
@@ -167,11 +209,11 @@ GameController::handle(const event::BombExploded& event) -> void
   for (const auto [direction, range] : directions) {
     for (size_t i = 1; i <= range; i++) {
       const auto pose = initial_origin + direction * glm::ivec2(i);
-      if (world_.has_static_collision(pose.x, pose.y)) {
+      if (world_.has_static_collision(pose)) {
         break;
       }
 
-      bool affects_dynamic_object = world_.is_cell_occupied(pose.x, pose.y);
+      bool affects_dynamic_object = world_.is_cell_occupied(pose);
 
       using namespace std::chrono_literals;
       const auto duration =
@@ -292,33 +334,88 @@ GameController::handle(const event::PickedPickupItem& event) -> void
 auto
 GameController::handle(const event::EntityCollide& event) -> void
 {
-  if (entity_exist(event.actor_a_, event.actor_b_)) {
-    auto& entity_a = world_.get_entity(event.actor_a_);
-    auto& entity_b = world_.get_entity(event.actor_b_);
+  const auto collision_response =
+    std::unordered_map<std::pair<Entity::Type, Entity::Type>,
+                       std::function<void(Entity&, Entity&)>,
+                       pair_hash>{
+      { { Entity::Type::pickup, Entity::Type::player },
+        [&](Entity& pickup, Entity& player) {
+          event_distributor_.enqueue_event(
+            event::PickedPickupItem{ pickup.get_id(), player.get_id() });
 
-    if (entity_a.type_ == Entity::Type::pickup ||
-        entity_b.type_ == Entity::Type::pickup) {
-      auto& pickup =
-        (entity_a.type_ == Entity::Type::pickup) ? entity_a : entity_b;
-      auto& player =
-        (entity_a.type_ != Entity::Type::pickup) ? entity_a : entity_b;
+          spdlog::debug("Picked up a pickup");
+        } },
+      { { Entity::Type::fire, Entity::Type::player },
+        [&](Entity& fire, Entity& player) {
+          event_distributor_.enqueue_event(event::PlayerDied{});
+        } },
+      { { Entity::Type::fire, Entity::Type::crate },
+        [&](Entity& fire, Entity& crate) {
+          event_distributor_.enqueue_event(
+            event::CrateDestroyed{ crate.get_id() });
+        } }
+    };
 
-      event_distributor_.enqueue_event(
-        event::PickedPickupItem{ pickup.get_id(), player.get_id() });
-
-      spdlog::debug("Picked up a pickup");
-    } else if (entity_a.type_ == Entity::Type::fire ||
-               entity_b.type_ == Entity::Type::fire) {
-
-      event_distributor_.enqueue_event(event::PlayerDied{});
-    }
+  if (not entity_exist(event.actor_a_, event.actor_b_)) {
+    return;
   }
+
+  auto& entity_a = world_.get_entity(event.actor_a_);
+  auto& entity_b = world_.get_entity(event.actor_b_);
+
+  const auto collision_type = std::make_pair(entity_a.type_, entity_b.type_);
+  const auto collision_type_reversed =
+    std::make_pair(entity_b.type_, entity_a.type_);
+  if (collision_response.count(collision_type)) {
+    collision_response.at(collision_type)(entity_a, entity_b);
+  } else if (collision_response.count(collision_type_reversed)) {
+    collision_response.at(collision_type_reversed)(entity_b, entity_a);
+  } else {
+    return;
+  }
+}
+auto
+GameController::spawn_crate(glm::vec2 position) -> Entity&
+{
+  auto& entity = world_.create(Entity::Type::crate)
+                   .set_tile(0)
+                   .set_tileset("crate.json")
+                   .set_origin(position)
+                   .set_flags(Entity::Flags::frozen);
+  spdlog::trace("spawn_crate: pose ({}, {})", position.x, position.y);
+  return entity;
+}
+
+auto
+GameController::spawn_pickup(glm::vec2 position, game_logic::PickupType type)
+  -> Entity&
+{
+  std::unordered_map<game_logic::PickupType, unsigned> type_to_tile = {
+    { game_logic::PickupType::increase_bomb_count, 0 },
+    { game_logic::PickupType::increase_bomb_range, 1 },
+    { game_logic::PickupType::freeze_for_some_time, 2 },
+  };
+  if (type_to_tile.count(type) == 0) {
+    throw std::runtime_error(
+      fmt::format("Missing implementation for pickup type {}", type));
+  }
+
+  auto& pickup = world_.create(Entity::Type::pickup)
+                   .set_tile(type_to_tile.at(type))
+                   .set_tileset("potions.json")
+                   .set_origin(position)
+                   .set_data(game_logic::PickupData{ type });
+  spdlog::trace("spawn_pickup: pose ({}, {}), type: {}",
+                position.x,
+                position.y,
+                static_cast<unsigned>(type));
+  return pickup;
 }
 
 auto
 GameController::spawn_temporary_fire(glm::vec2 position,
                                      std::chrono::milliseconds duration)
-  -> Entity::Id
+  -> Entity&
 {
   const auto fire_id = world_.create(Entity::Type::fire)
                          .set_tileset("fire.json")
@@ -332,7 +429,38 @@ GameController::spawn_temporary_fire(glm::vec2 position,
                 position.x,
                 position.y,
                 duration.count());
-  return fire_id;
+  return world_.get_entity(fire_id);
+}
+
+auto
+GameController::spawn_particle(glm::vec2 position,
+                               std::chrono::milliseconds duration,
+                               const std::string tileset,
+                               unsigned animation_id) -> Entity&
+{
+  auto& particle = world_.create(Entity::Type::particle)
+                     .set_tileset(tileset)
+                     .set_animation(animation_id)
+                     .set_origin(position);
+
+  event_distributor_.enqueue_event(
+    event::ParticleDestroyed{ particle.get_id() }, duration);
+
+  spdlog::trace("spawn_particle: pose ({}, {}), duration: {}",
+                position.x,
+                position.y,
+                duration.count());
+  return particle;
+}
+
+auto
+GameController::compute_random_pickup_type() -> bm::game_logic::PickupType
+{
+  std::uniform_int_distribution<> pickup_type_distribution(
+    0, bm::game_logic::PickupType::last - 1);
+
+  return static_cast<bm::game_logic::PickupType>(
+    pickup_type_distribution(random_generator_));
 }
 
 template<typename... Args>
