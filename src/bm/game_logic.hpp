@@ -17,9 +17,22 @@ enum PickupType
   last
 };
 
+enum WeaponType
+{
+  bomb,
+  flood_bomb,
+  immediate_fire
+};
+
+struct BombPrototype
+{
+  unsigned int range_{ 1 };
+};
+
 struct PlayerData
 {
-  unsigned int bomb_range_distance_{ 1 };
+  WeaponType weapon_{ WeaponType::bomb };
+  BombPrototype bomb_prototype_;
   unsigned int available_bomb_count_{ 1 };
 };
 
@@ -30,8 +43,8 @@ struct PickupData
 
 struct BombData
 {
-  unsigned int parent_entity_id_;
-  unsigned int range_;
+  std::optional<unsigned int> parent_entity_id_;
+  BombPrototype prototype_;
 };
 
 } // namespace bm::game_logic

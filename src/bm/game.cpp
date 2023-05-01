@@ -163,7 +163,10 @@ Game::on_key_callback(int key, int scancode, int action, int mods) -> void
   }
 
   if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
-    event_distributor_.enqueue_event(bm::event::BombPlanted{});
+    if (world_.get_player_id()) {
+      event_distributor_.enqueue_event(
+        bm::event::PlayerActionEvent{ *world_.get_player_id() });
+    }
   }
 
   if (key == GLFW_KEY_BACKSPACE && action == GLFW_PRESS) {

@@ -43,7 +43,7 @@ struct CrateDestroyed : public meta::EntityUpdate
 
 struct BombExploded : public meta::EntityUpdate
 {};
-struct BombPlanted
+struct PlayerActionEvent : public meta::EntityUpdate
 {};
 struct FireTerminated : public meta::EntityUpdate
 {};

@@ -39,7 +39,7 @@ public:
                                          event::ParticleDestroyed,
                                          event::CrateDestroyed,
                                          event::BombExploded,
-                                         event::BombPlanted,
+                                         event::PlayerActionEvent,
                                          event::EntityCollide,
                                          event::FireTerminated,
                                          event::PickedPickupItem>(*this);
@@ -54,11 +54,14 @@ public:
   auto handle(const event::CrateDestroyed& event) -> void;
   auto handle(const event::BombExploded& event) -> void;
   auto handle(const event::FireTerminated& event) -> void;
-  auto handle(const event::BombPlanted& event) -> void;
+  auto handle(const event::PlayerActionEvent& event) -> void;
   auto handle(const event::PickedPickupItem& event) -> void;
   auto handle(const event::EntityCollide& event) -> void;
 
 protected:
+  auto spawn_bomb(glm::vec2 position,
+                  game_logic::BombPrototype type = {},
+                  std::optional<Entity::Id> parent = std::nullopt) -> Entity&;
   auto spawn_crate(glm::vec2 position) -> Entity&;
   auto spawn_pickup(glm::vec2 position, game_logic::PickupType type) -> Entity&;
 

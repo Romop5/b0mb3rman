@@ -166,7 +166,11 @@ GameController::handle(const event::CrateDestroyed& event) -> void
   crate.set_flags(Entity::Flags::marked_for_destruction);
   spdlog::trace("Crate {} destroyed", event.actor_);
 
-  spawn_pickup(crate.aabb_.origin_, compute_random_pickup_type());
+  std::uniform_real_distribution<> pickup_type_distribution(0, 1);
+  const auto probability = pickup_type_distribution(random_generator_);
+  if (probability > 0.8) {
+    spawn_pickup(crate.aabb_.origin_, compute_random_pickup_type());
+  }
 }
 
 auto
@@ -181,8 +185,9 @@ GameController::handle(const event::BombExploded& event) -> void
   auto& bomb = world_.get_entity(event.actor_);
   const auto& bomb_data = std::get<BombData>(bomb.data_);
 
-  if (world_.has_entity(bomb_data.parent_entity_id_)) {
-    auto& player = world_.get_entity(bomb_data.parent_entity_id_);
+  if (bomb_data.parent_entity_id_ and
+      world_.has_entity(*bomb_data.parent_entity_id_)) {
+    auto& player = world_.get_entity(*bomb_data.parent_entity_id_);
     auto& player_data = std::get<PlayerData>(player.data_);
     player_data.available_bomb_count_++;
   }
@@ -194,7 +199,7 @@ GameController::handle(const event::BombExploded& event) -> void
     constants::fire_effect_duration_mean_ms,
     constants::fire_effect_duration_sigma_ms);
 
-  const auto spawn_range = bomb_data.range_;
+  const auto spawn_range = bomb_data.prototype_.range_;
   const std::vector<std::pair<glm::ivec2, float>> directions = {
     { glm::ivec2{ 0, 0 }, 1 },
     { glm::ivec2{ 0, 1 }, spawn_range },
@@ -248,7 +253,7 @@ GameController::handle(const event::FireTerminated& event) -> void
 }
 
 auto
-GameController::handle(const event::BombPlanted& event) -> void
+GameController::handle(const event::PlayerActionEvent& event) -> void
 {
   using namespace bm::game_logic;
 
@@ -256,37 +261,32 @@ GameController::handle(const event::BombPlanted& event) -> void
     auto& player = world_.get_entity(*player_id);
     auto& player_data = std::get<PlayerData>(player.data_);
 
-    if (not player_data.available_bomb_count_) {
-      spdlog::trace("Player has zero available bombs, skipping plant");
-      return;
+    switch (player_data.weapon_) {
+
+      case WeaponType::bomb: {
+
+        if (not player_data.available_bomb_count_) {
+          spdlog::trace("Player has zero available bombs, skipping plant");
+          return;
+        }
+
+        const auto coords = glm::round(player.aabb_.origin_);
+        spawn_bomb(coords, player_data.bomb_prototype_, player_id);
+        player_data.available_bomb_count_--;
+
+        hud_manager_.get_texts()
+          .get_or_create_default("status")
+          .set_text("Bomb planted!")
+          .set_fade_effect(HUDManager::Text::FadingEffect{ 1 })
+          .set_wave_effect(HUDManager::Text::WaveEffect{ 0, 5 });
+      } break;
+      case WeaponType::immediate_fire: {
+        spdlog::trace("immediate_fire not implemented");
+      } break;
+      case WeaponType::flood_bomb: {
+        spdlog::trace("flood_bomb not implemented");
+      } break;
     }
-
-    player_data.available_bomb_count_--;
-
-    auto bomb_id =
-      world_.create(Entity::Type::bomb)
-        .set_tile(12)
-        .set_data(BombData{ *player_id, player_data.bomb_range_distance_ })
-        .get_id();
-
-    const auto coords = glm::round(player.aabb_.origin_);
-    world_.get_entity(bomb_id).set_origin(coords);
-
-    using namespace std::chrono_literals;
-    event_distributor_.enqueue_event(event::BombExploded{ bomb_id }, 2000ms);
-
-    spdlog::trace(
-      "Planting bomb at ({}, {}), with range ({}), remaining bombs ({})",
-      coords.x,
-      coords.y,
-      player_data.bomb_range_distance_,
-      player_data.available_bomb_count_);
-
-    hud_manager_.get_texts()
-      .get_or_create_default("status")
-      .set_text("Bomb planted!")
-      .set_fade_effect(HUDManager::Text::FadingEffect{ 1 })
-      .set_wave_effect(HUDManager::Text::WaveEffect{ 0, 5 });
   }
 }
 
@@ -322,8 +322,9 @@ GameController::handle(const event::PickedPickupItem& event) -> void
       player_data.available_bomb_count_++;
       break;
     case PickupType::increase_bomb_range:
-      player_data.bomb_range_distance_ += 1;
+      player_data.bomb_prototype_.range_ += 1;
       break;
+
     default:
       spdlog::warn(
         "Pickup '{}' not used, behavior not defined for pickup type '{}'",
@@ -374,6 +375,25 @@ GameController::handle(const event::EntityCollide& event) -> void
     return;
   }
 }
+
+auto
+GameController::spawn_bomb(glm::vec2 position,
+                           game_logic::BombPrototype type,
+                           std::optional<Entity::Id> parent) -> Entity&
+{
+  auto& entity = world_.create(Entity::Type::bomb)
+                   .set_tile(12)
+                   .set_data(bm::game_logic::BombData{ *parent, type })
+                   .set_origin(position);
+
+  using namespace std::chrono_literals;
+  event_distributor_.enqueue_event(event::BombExploded{ entity.get_id() },
+                                   2000ms);
+
+  spdlog::trace("spawn_bomb at ({}, {})", position.x, position.y);
+  return entity;
+}
+
 auto
 GameController::spawn_crate(glm::vec2 position) -> Entity&
 {
