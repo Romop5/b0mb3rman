@@ -38,6 +38,17 @@
             "dependsOn": [
                 "conan_build"
             ]
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: build",
+            "command": "cd build && conan build ../",
+            "targets": [
+                ""
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake template build task"
         }
     ]
 }

@@ -73,6 +73,7 @@
         "strstream": "cpp",
         "*.ipp": "cpp",
         "resourcecpp": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "regex": "cpp"
     }
 }
