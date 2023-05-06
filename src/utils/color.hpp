@@ -14,9 +14,9 @@ public:
                  unsigned char g,
                  unsigned char b,
                  unsigned char a = 255);
-  explicit Color(float r, float g, float b, float a = 1.0);
+  explicit Color(float r, float g, float b, float a = 1.0f);
 
-  auto operator==(const Color& other) -> bool;
+  auto operator==(const Color& other) const -> bool;
 
   unsigned char r{ 255 }, g{ 255 }, b{ 255 }, a{ 255 };
 };

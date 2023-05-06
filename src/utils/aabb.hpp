@@ -23,7 +23,7 @@ compare_intervals(T a, T b) -> IntervalComparisonResult
     return IntervalComparisonResult::b_inside_a;
   } else if (a.x >= b.x and a.y <= b.y) {
     return IntervalComparisonResult::a_inside_b;
-  } else if ((a.x < b.x and a.y < b.y) or (a.x > b.x and a.y > b.y)) {
+  } else if ((a.y < b.x) or (a.x > b.y)) {
     return IntervalComparisonResult::disjoint;
   }
   return IntervalComparisonResult::overlaps;
@@ -112,8 +112,8 @@ public:
     const auto this_x = project_x();
     const auto this_y = project_y();
 
-    const auto other_x = project_x();
-    const auto other_y = project_y();
+    const auto other_x = boundary.project_x();
+    const auto other_y = boundary.project_y();
 
     if ((compare_intervals(this_x, other_x) ==
          IntervalComparisonResult::a_inside_b) and

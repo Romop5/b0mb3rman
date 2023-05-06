@@ -13,6 +13,15 @@
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "parseText",
             "arguments": ""
+        },
+        {
+            "name": "Debug-Unit",
+            "type": "gdb",
+            "request": "launch",
+            "target": "./build/unittests/unittests",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "parseText",
+            "arguments": ""
         }
     ]
 }

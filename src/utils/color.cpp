@@ -34,6 +34,7 @@ Color::Color(std::string hex_color)
       r = (ascii_to_hex(hex_part[0]) << 4) + ascii_to_hex(hex_part[1]);
       g = (ascii_to_hex(hex_part[2]) << 4) + ascii_to_hex(hex_part[3]);
       b = (ascii_to_hex(hex_part[4]) << 4) + ascii_to_hex(hex_part[5]);
+      a = 255;
       return;
     } else if (std::regex_match(hex_part, std::regex("[0-9a-f]{8}"))) {
       r = (ascii_to_hex(hex_part[0]) << 4) + ascii_to_hex(hex_part[1]);
@@ -58,16 +59,18 @@ Color::Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
   , g{ g }
   , b{ b }
   , a{ a }
-{}
+{
+}
 Color::Color(float r, float g, float b, float a)
-  : r{ r / 255.0 }
-  , g{ g / 255.0 }
-  , b{ b / 255.0 }
-  , a{ a / 255.0 }
-{}
+  : r{ r * 255.0f }
+  , g{ g * 255.0f }
+  , b{ b * 255.0f }
+  , a{ a * 255.0f }
+{
+}
 
 auto
-Color::operator==(const Color& other) -> bool
+Color::operator==(const Color& other) const -> bool
 {
   return r == other.r && g == other.g && b == other.b && a == other.a;
 }

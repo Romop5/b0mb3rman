@@ -40,6 +40,19 @@
             ]
         },
         {
+            "label": "unittests",
+            "type": "shell",
+            "command": "cd build && ctest",
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "conan_build"
+            ]
+        },
+        {
             "type": "cmake",
             "label": "CMake: build",
             "command": "cd build && conan build ../",

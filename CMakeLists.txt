@@ -6,6 +6,9 @@ project(b0mb3rman
  LANGUAGES "CXX"
 )
 
+option(${PROJECT_NAME}_BUILD_UNITTESTS "Enables unittesting as a part of default build" FALSE)
+option(${PROJECT_NAME}_BUILD_DOXYGEN   "Enables `make doxygen` target" FALSE)
+
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
 
 find_package(glbinding REQUIRED)
@@ -17,17 +20,13 @@ find_package(freeimage REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Freetype REQUIRED)
 
-find_package(Doxygen
-             REQUIRED dot
-             OPTIONAL_COMPONENTS mscgen dia)
+if(${PROJECT_NAME}_BUILD_DOXYGEN)
+        find_package(Doxygen
+                REQUIRED dot
+                OPTIONAL_COMPONENTS mscgen dia)
+endif()
 
-add_executable(b0mb3rman 
-        src/main.cpp 
-        src/bm/game.cpp
-        src/bm/game_controller.cpp
-        src/bm/world.cpp
-        src/bm/hud_manager.cpp
-        src/bm/level.cpp
+add_library(engine 
         src/render/application.cpp
         src/render/resource.cpp
         src/render/loader.cpp
@@ -42,8 +41,10 @@ add_executable(b0mb3rman
         src/utils/json.cpp
         src/utils/color.cpp
 )
-target_link_libraries(b0mb3rman PUBLIC 
-        bfg::lyra 
+
+target_compile_features(engine PUBLIC cxx_std_17)
+target_include_directories(engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(engine PUBLIC 
         nlohmann_json::nlohmann_json
         spdlog::spdlog
         glfw
@@ -53,8 +54,36 @@ target_link_libraries(b0mb3rman PUBLIC
         Boost::system
         freetype
 )
-target_compile_features(b0mb3rman PRIVATE cxx_std_17)
-target_include_directories(b0mb3rman PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_library(b0mb3rman::engine ALIAS engine)
 
+add_library(game 
+        src/bm/game.cpp
+        src/bm/game_controller.cpp
+        src/bm/world.cpp
+        src/bm/hud_manager.cpp
+        src/bm/level.cpp
+)
+target_link_libraries(game PUBLIC 
+        b0mb3rman::engine
+)
+target_include_directories(game PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_library(b0mb3rman::game ALIAS game)
 
-doxygen_add_docs(doxygen)
+add_executable(b0mb3rman 
+        src/main.cpp 
+)
+
+target_link_libraries(b0mb3rman PUBLIC 
+        b0mb3rman::engine
+        b0mb3rman::game
+        bfg::lyra
+)
+
+if(${PROJECT_NAME}_BUILD_UNITTESTS)
+        enable_testing()
+        add_subdirectory(unittests)       
+endif()
+
+if(${PROJECT_NAME}_BUILD_DOXYGEN)
+        doxygen_add_docs(doxygen)        
+endif()
