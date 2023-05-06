@@ -40,6 +40,8 @@ public:
     , size_{ size }
   {
   }
+  auto get_size() const -> glm::vec2 { return size_; }
+  auto get_origin() const -> glm::vec2 { return origin_; }
   auto get_midpoint() const -> glm::vec2
   {
     return origin_ + size_ * glm::vec2(0.5);

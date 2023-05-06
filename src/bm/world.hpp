@@ -39,6 +39,7 @@ public:
   auto update_static_collisions(utils::OccupancyMap2D<bool> map) -> void;
 
   /* ICollisionWorld */
+  auto get_world_boundaries() -> utils::AABB override final;
   auto is_out_of_bounds(glm::vec2 position) -> bool override final;
   auto is_point_colliding(glm::vec2 position,
                           Entity::TypeMask allowed_types = Entity::TypeMask{

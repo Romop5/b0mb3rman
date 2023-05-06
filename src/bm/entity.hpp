@@ -16,11 +16,13 @@ public:
   using EntityData = std::variant<std::monostate,
                                   game_logic::PlayerData,
                                   game_logic::PickupData,
-                                  game_logic::BombData>;
+                                  game_logic::BombData,
+                                  game_logic::NPCData>;
 
   enum Type : uint8_t
   {
     player,
+    npc,
     bomb,
     pickup,
     fire,

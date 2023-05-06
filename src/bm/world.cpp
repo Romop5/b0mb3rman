@@ -185,6 +185,12 @@ World::update_static_collisions(utils::OccupancyMap2D<bool> map) -> void
 }
 
 auto
+World::get_world_boundaries() -> utils::AABB
+{
+  return boundary_;
+}
+
+auto
 World::is_out_of_bounds(glm::vec2 position) -> bool
 {
   return !boundary_.contains(position);

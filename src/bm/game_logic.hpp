@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 namespace bm {
 
 namespace game_logic {
@@ -45,6 +47,18 @@ struct BombData
 {
   std::optional<unsigned int> parent_entity_id_;
   BombPrototype prototype_;
+};
+
+enum class NPCState
+{
+  random_walk,
+  chasing_target,
+};
+
+struct NPCData
+{
+  NPCState goal;
+  glm::vec2 target_position;
 };
 
 } // namespace bm::game_logic
