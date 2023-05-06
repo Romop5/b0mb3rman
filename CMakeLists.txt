@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
-project(b0mb3rman)
+project(b0mb3rman
+ VERSION 0.0.0
+ DESCRIPTION "A for-fun and for education, heavily inspired copy of Bomberman game"
+ HOMEPAGE_URL "https://github.com/Romop5/b0mb3rman"
+ LANGUAGES "CXX"
+)
 
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
 
@@ -11,6 +16,10 @@ find_package(glfw3 REQUIRED)
 find_package(freeimage REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Freetype REQUIRED)
+
+find_package(Doxygen
+             REQUIRED dot
+             OPTIONAL_COMPONENTS mscgen dia)
 
 add_executable(b0mb3rman 
         src/main.cpp 
@@ -46,3 +55,6 @@ target_link_libraries(b0mb3rman PUBLIC
 )
 target_compile_features(b0mb3rman PRIVATE cxx_std_17)
 target_include_directories(b0mb3rman PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+
+doxygen_add_docs(doxygen)
