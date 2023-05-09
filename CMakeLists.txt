@@ -62,6 +62,7 @@ add_library(game
         src/bm/world.cpp
         src/bm/hud_manager.cpp
         src/bm/level.cpp
+        src/bm/navigation_mesh.cpp
 )
 target_link_libraries(game PUBLIC 
         b0mb3rman::engine

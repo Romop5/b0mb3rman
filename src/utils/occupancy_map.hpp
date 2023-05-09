@@ -28,6 +28,22 @@ compute_index(Index index, Dims dims) -> typename Index::value_type
   return result;
 }
 
+template<typename Index, typename Dims>
+constexpr auto
+compute_nd_index(typename Index::value_type index, Dims dims) -> Index
+{
+  constexpr auto nd_index_size = std::tuple_size<Index>::value;
+  static_assert(nd_index_size == dims.size());
+
+  typename Index::value_type dim_accumulation = 1;
+  Index result = {};
+  for (size_t i = 0; i < nd_index_size; i++) {
+    result[i] = (index / dim_accumulation) % dims[i];
+    dim_accumulation *= dims.at(i);
+  }
+  return result;
+}
+
 namespace detail {
 } // utils::detail
 
@@ -62,8 +78,16 @@ public:
   auto begin() { return cells_.begin(); }
   auto end() { return cells_.end(); }
 
+  template<typename F>
+  auto for_each(F functor)
+  {
+    for (size_t i = 0; i < cells_.size(); i++) {
+      functor(compute_nd_index<Index>(i, dims_), cells_.at(i));
+    }
+  }
+
 private:
-  auto get_storage_size() const
+  auto get_storage_size() const -> unsigned int
   {
     return std::reduce(
       dims_.begin(), dims_.end(), 1, utils::product_op<unsigned>);
