@@ -154,5 +154,77 @@ compute_path(const G& graph, NodeId start, NodeId end) -> std::vector<NodeId>
   return {};
 }
 
+template<typename T, unsigned index>
+struct CompareItem
+{
+  constexpr auto operator()(const T& lhs, const T& rhs) -> bool
+  {
+    return std::get<index>(lhs) > std::get<index>(rhs);
+  }
+};
+
+template<typename G, typename NodeId = typename G::NodeId>
+auto
+compute_shortest_path(const G& graph, NodeId start, NodeId end)
+  -> std::vector<NodeId>
+{
+  /**
+   * @brief Represents status of reachable node
+   * @param first node
+   * @param second distance from start
+   * @param third previous node
+   *
+   */
+  using ReachableNode = std::tuple<NodeId, unsigned, NodeId>;
+
+  // Min. heap
+  std::priority_queue<ReachableNode,
+                      std::vector<ReachableNode>,
+                      CompareItem<ReachableNode, 1>>
+    remaining_vertices;
+
+  std::unordered_map<NodeId, NodeId> previous_vertices;
+  std::unordered_set<NodeId> visited_vertex;
+
+  // Helper: constructs a path using pointers to previous vertices
+  auto trace_path_back = [&](NodeId from) {
+    std::vector<NodeId> result = { from };
+
+    auto previous_vertex = from;
+    while (previous_vertex != start) {
+      previous_vertex = previous_vertices.at(previous_vertex);
+      result.push_back(previous_vertex);
+    }
+    return result;
+  };
+
+  // Start with start node
+  remaining_vertices.push({ start, 0, start });
+
+  // while not exhausted a set of all reachable vertices (from start)
+  while (not remaining_vertices.empty()) {
+    const auto [vertex, distance, previous_vertex] = remaining_vertices.top();
+    remaining_vertices.pop();
+
+    // Skip already visited vertex (prevents cycling when path does not exist)
+    if (visited_vertex.count(vertex) > 0) {
+      continue;
+    }
+    visited_vertex.insert(vertex);
+    previous_vertices[vertex] = previous_vertex;
+
+    // success: terminate with creating a vector of previous paths
+    if (vertex == end) {
+      return trace_path_back(vertex);
+    }
+
+    // append neighbours as next reachable vertices
+    for (const auto& next : graph.get_neighbours(vertex)) {
+      remaining_vertices.push({ next, distance + 1, vertex });
+    }
+  }
+  return {};
+}
+
 } // namespace utils::graph_algorihms
 } // namespace utils

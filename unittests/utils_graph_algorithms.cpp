@@ -133,5 +133,32 @@ TEST_CASE("utils::GraphAlgorithms: : compute_path", "graph")
 
   {
     auto path = utils::graph_algorithms::compute_path(graph, 0, 2);
+    REQUIRE(not path.empty());
+  }
+
+  {
+    auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 2);
+    REQUIRE(not path.empty());
+  }
+
+  {
+    auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 3);
+    REQUIRE(path.empty());
+  }
+
+  {
+    auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 1);
+    REQUIRE(not path.empty());
+    REQUIRE(path.size() == 2);
+  }
+  {
+    auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 3);
+    REQUIRE(path.empty());
+  }
+
+  {
+    auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 2);
+    REQUIRE(not path.empty());
+    REQUIRE(path.size() == 2);
   }
 }
