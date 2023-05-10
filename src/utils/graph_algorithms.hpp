@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stack>
+#include <queue>
 #include <unordered_set>
 
 namespace utils {
@@ -97,6 +97,61 @@ make_transitive(const G& graph) -> G
     }
   } while (was_updated);
   return result;
+}
+
+template<typename G>
+auto
+make_strong_components(const G& graph) -> G
+{
+  return make_transitive(make_reflexive(graph));
+}
+
+template<typename G, typename NodeId = typename G::NodeId>
+auto
+compute_path(const G& graph, NodeId start, NodeId end) -> std::vector<NodeId>
+{
+  std::unordered_set<NodeId> visited_vertex;
+  std::unordered_map<NodeId, NodeId> previous_vertices;
+  std::queue<NodeId> remaining_vertices;
+
+  // Helper: constructs a path using pointers to previous vertices
+  auto trace_path_back = [&](NodeId from) {
+    std::vector<NodeId> result = { from };
+
+    auto previous_vertex = from;
+    while (previous_vertex != start) {
+      previous_vertex = previous_vertices.at(previous_vertex);
+      result.push_back(previous_vertex);
+    }
+    return result;
+  };
+
+  // Start with start node
+  remaining_vertices.push(start);
+
+  // while not exhausted a set of all reachable vertices (from start)
+  while (not remaining_vertices.empty()) {
+    const auto vertex = remaining_vertices.front();
+    remaining_vertices.pop();
+
+    // success: terminate with creating a vector of previous paths
+    if (vertex == end) {
+      return trace_path_back(vertex);
+    }
+
+    // Skip already visited vertex
+    if (visited_vertex.count(vertex) > 0) {
+      continue;
+    }
+    visited_vertex.insert(vertex);
+
+    // append neighbours as next reachable vertices
+    for (const auto& next : graph.get_neighbours(vertex)) {
+      previous_vertices[next] = vertex;
+      remaining_vertices.push(next);
+    }
+  }
+  return {};
 }
 
 } // namespace utils::graph_algorihms

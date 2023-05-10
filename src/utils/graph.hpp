@@ -48,7 +48,8 @@ public:
   using Edge = std::pair<NodeId, NodeId>;
 
   Graph() = default;
-  Graph(std::unordered_set<NodeId> vertices, std::unordered_set<Edge> edges);
+  Graph(std::unordered_set<NodeId> vertices,
+        std::unordered_set<Edge, detail::pair_hash> edges);
 
   auto has_edge(NodeId a, NodeId b) const -> bool;
   auto get_edge_data(NodeId a, NodeId b) const -> EdgeStorage;
@@ -81,6 +82,17 @@ using SymmetricGraph = Graph<EdgeStorage, GraphOrientation::symmetric>;
 
 template<typename EdgeStorage = std::monostate>
 using OrientedGraph = Graph<EdgeStorage, GraphOrientation::oriented>;
+
+template<typename EdgeStorage, unsigned Orientation>
+Graph<EdgeStorage, Orientation>::Graph(
+  std::unordered_set<Graph::NodeId> vertices,
+  std::unordered_set<Graph::Edge, detail::pair_hash> edges)
+  : vertices_{ vertices }
+{
+  for (const auto& edge : edges) {
+    edges_[edge] = {};
+  }
+}
 
 template<typename EdgeStorage, unsigned Orientation>
 auto
@@ -149,13 +161,13 @@ Graph<EdgeStorage, Orientation>::get_neighbours(NodeId vertex) const
   -> std::unordered_set<NodeId>
 {
   std::unordered_set<NodeId> result;
-  std::transform(edges_.begin(),
-                 edges_.end(),
-                 std::inserter(result, result.begin()),
-                 [&](const auto& edge) {
-                   const auto p = edge.first;
-                   return p.first == vertex ? p.second : p.first;
-                 });
+  for (auto& [edge, _] : edges_) {
+    if (edge.first != vertex and edge.second != vertex) {
+      continue;
+    }
+    const auto neighbour = edge.first != vertex ? edge.first : edge.second;
+    result.insert(neighbour);
+  }
   return result;
 }
 

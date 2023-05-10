@@ -3,6 +3,27 @@
 #include <utils/graph.hpp>
 #include <utils/graph_algorithms.hpp>
 
+namespace {
+template<typename Map>
+auto
+are_first_keys_in_second_map(Map first, Map second) -> bool
+{
+  for (const auto& key : first) {
+    if (second.count(key) == 0)
+      return false;
+  }
+  return true;
+}
+
+template<typename Map>
+auto
+are_equal(Map first, Map second) -> bool
+{
+  return (are_first_keys_in_second_map(first, second) and
+          are_first_keys_in_second_map(second, first));
+}
+} // namespace
+
 TEST_CASE("utils::GraphAlgorithms: : has_circle", "graph")
 {
   utils::SymmetricGraph<> graph;
@@ -52,4 +73,65 @@ TEST_CASE("utils::GraphAlgorithms: : make_transitive", "graph")
   REQUIRE_FALSE(graph.has_edge(0, 0));
   graph = utils::graph_algorithms::make_transitive(graph);
   REQUIRE(graph.has_edge(0, 0));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : compute_strong_components - trivial",
+          "graph")
+{
+  utils::SymmetricGraph<> graph({ 0, 1, 2, 3 }, {});
+  REQUIRE(are_equal(graph.get_neighbours(0), {}));
+  REQUIRE(are_equal(graph.get_neighbours(1), {}));
+  REQUIRE(are_equal(graph.get_neighbours(2), {}));
+  REQUIRE(are_equal(graph.get_neighbours(3), {}));
+  graph = utils::graph_algorithms::make_strong_components(graph);
+  REQUIRE(are_equal(graph.get_neighbours(0), { 0 }));
+  REQUIRE(are_equal(graph.get_neighbours(1), { 1 }));
+  REQUIRE(are_equal(graph.get_neighbours(2), { 2 }));
+  REQUIRE(are_equal(graph.get_neighbours(3), { 3 }));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : compute_strong_components", "graph")
+{
+  utils::SymmetricGraph<> graph({ 0, 1, 2, 3 },
+                                {
+                                  {
+                                    { 0, 1 },
+                                    { 1, 2 },
+                                    { 2, 0 },
+                                  },
+                                });
+  REQUIRE(are_equal(graph.get_neighbours(0), { 1, 2 }));
+  REQUIRE(are_equal(graph.get_neighbours(1), { 0, 2 }));
+  REQUIRE(are_equal(graph.get_neighbours(2), { 0, 1 }));
+  REQUIRE(are_equal(graph.get_neighbours(3), {}));
+  graph = utils::graph_algorithms::make_strong_components(graph);
+  REQUIRE(are_equal(graph.get_neighbours(0), { 0, 1, 2 }));
+  REQUIRE(are_equal(graph.get_neighbours(1), { 0, 1, 2 }));
+  REQUIRE(are_equal(graph.get_neighbours(2), { 0, 1, 2 }));
+  REQUIRE(are_equal(graph.get_neighbours(3), { 3 }));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : compute_path", "graph")
+{
+  utils::SymmetricGraph<> graph({ 0, 1, 2, 3 },
+                                {
+                                  {
+                                    { 0, 1 },
+                                    { 1, 2 },
+                                    { 2, 0 },
+                                  },
+                                });
+
+  {
+    auto path = utils::graph_algorithms::compute_path(graph, 0, 1);
+    REQUIRE(not path.empty());
+  }
+  {
+    auto path = utils::graph_algorithms::compute_path(graph, 0, 3);
+    REQUIRE(path.empty());
+  }
+
+  {
+    auto path = utils::graph_algorithms::compute_path(graph, 0, 2);
+  }
 }
