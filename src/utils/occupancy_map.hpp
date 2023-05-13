@@ -64,8 +64,8 @@ public:
   OccupancyMap() = default;
 
   OccupancyMap(Dims dims, T initial_state = {})
-    : dims_{ dims }
-    , size_{ get_storage_size() }
+    : size_{ get_storage_size(dims) }
+    , dims_{ dims }
     , cells_{ std::vector<T>(size_, initial_state) }
   {
   }
@@ -92,14 +92,14 @@ public:
   }
 
 private:
-  auto get_storage_size() const -> unsigned int
+  auto get_storage_size(Dims dims) const -> unsigned int
   {
     return std::reduce(
-      dims_.begin(), dims_.end(), 1, utils::product_op<unsigned>);
+      dims.begin(), dims.end(), 1, utils::product_op<unsigned>);
   }
 
-  Dims dims_;
   unsigned size_{ 0 };
+  Dims dims_;
   std::vector<T> cells_;
 };
 
