@@ -52,6 +52,7 @@ TEST_CASE("utils::NavigationMesh: constructor", "navigation_mesh")
   };
   auto mocked_world = CollisionWorldMock(collision_map, glm::vec2(3, 3));
   bm::NavigationMesh navmesh(mocked_world);
+  navmesh.update();
 
   // Identity: the same place should always be reachable
   REQUIRE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(0, 0)));
@@ -59,8 +60,24 @@ TEST_CASE("utils::NavigationMesh: constructor", "navigation_mesh")
   REQUIRE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(0, 1)));
   REQUIRE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(0, 2)));
 
+  REQUIRE(navmesh.compute_path(glm::vec2(0, 0), glm::vec2(0, 0)).size() == 1);
+  REQUIRE(navmesh.compute_path(glm::vec2(0, 0), glm::vec2(0, 1)).size() == 2);
+  REQUIRE(navmesh.compute_path(glm::vec2(0, 0), glm::vec2(0, 2)).size() == 3);
+
+  REQUIRE_FALSE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(1, 0)));
+  REQUIRE_FALSE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(1, 1)));
+  REQUIRE_FALSE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(1, 2)));
+
+  REQUIRE(navmesh.compute_path(glm::vec2(0, 0), glm::vec2(1, 0)).size() == 0);
+  REQUIRE(navmesh.compute_path(glm::vec2(0, 0), glm::vec2(1, 1)).size() == 0);
+  REQUIRE(navmesh.compute_path(glm::vec2(0, 0), glm::vec2(1, 2)).size() == 0);
+
   // Partitions differ (two rows are separated by the middle row)
-  REQUIRE_FALSE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(3, 0)));
-  REQUIRE_FALSE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(3, 1)));
-  REQUIRE_FALSE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(3, 2)));
+  REQUIRE_FALSE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(2, 0)));
+  REQUIRE_FALSE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(2, 1)));
+  REQUIRE_FALSE(navmesh.is_reachable(glm::vec2(0, 0), glm::vec2(2, 2)));
+
+  REQUIRE(navmesh.compute_path(glm::vec2(0, 0), glm::vec2(2, 0)).size() == 0);
+  REQUIRE(navmesh.compute_path(glm::vec2(0, 0), glm::vec2(2, 1)).size() == 0);
+  REQUIRE(navmesh.compute_path(glm::vec2(0, 0), glm::vec2(2, 2)).size() == 0);
 }

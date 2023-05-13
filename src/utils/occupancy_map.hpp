@@ -8,7 +8,7 @@
 namespace utils {
 template<typename T>
 auto
-product_op(T a, T b) -> T
+product_op(const T a, const T b) -> T
 {
   return a * b;
 }
@@ -73,6 +73,11 @@ public:
   auto at(Index index) const { return cells_.at(compute_index(index, dims_)); }
   auto at(Index index) { return cells_.at(compute_index(index, dims_)); }
 
+  auto transform_index_to_offset(Index index) -> std::size_t
+  {
+    return compute_index(index, dims_);
+  }
+
   auto size() const { return size_; }
 
   auto begin() { return cells_.begin(); }
@@ -93,8 +98,8 @@ private:
       dims_.begin(), dims_.end(), 1, utils::product_op<unsigned>);
   }
 
-  unsigned size_{ 0 };
   Dims dims_;
+  unsigned size_{ 0 };
   std::vector<T> cells_;
 };
 

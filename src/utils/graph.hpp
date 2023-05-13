@@ -29,7 +29,7 @@ order_pair(const std::pair<T, T> pair) -> std::pair<T, T>
 
 enum GraphOrientation
 {
-  symmetric = 0,
+  unoriented = 0,
   oriented = 1
 };
 
@@ -40,7 +40,7 @@ enum GraphOrientation
  *
  */
 template<typename EdgeStorage = std::monostate,
-         unsigned Orientation = GraphOrientation::symmetric>
+         unsigned Orientation = GraphOrientation::unoriented>
 class Graph
 {
 public:
@@ -78,7 +78,7 @@ private:
 };
 
 template<typename EdgeStorage = std::monostate>
-using SymmetricGraph = Graph<EdgeStorage, GraphOrientation::symmetric>;
+using UnorientedGraph = Graph<EdgeStorage, GraphOrientation::unoriented>;
 
 template<typename EdgeStorage = std::monostate>
 using OrientedGraph = Graph<EdgeStorage, GraphOrientation::oriented>;
@@ -195,7 +195,7 @@ auto
 Graph<EdgeStorage, Orientation>::transform_pair(NodeId a, NodeId b) const
   -> std::pair<NodeId, NodeId>
 {
-  if constexpr (Orientation == GraphOrientation::symmetric) {
+  if constexpr (Orientation == GraphOrientation::unoriented) {
     return detail::order_pair(std::make_pair(a, b));
   } else {
     return { a, b };

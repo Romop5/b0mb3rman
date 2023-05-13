@@ -25,7 +25,7 @@ TEST_CASE("utils::Graph: : basic", "graph")
 
 TEST_CASE("utils::Graph: : basic symmetric graph", "graph")
 {
-  utils::SymmetricGraph<> graph;
+  utils::UnorientedGraph<> graph;
   REQUIRE(graph.empty_edges());
 
   graph.add_edge(0, 1);
@@ -39,7 +39,7 @@ TEST_CASE("utils::Graph: : basic symmetric graph", "graph")
 
 TEST_CASE("utils::Graph: : graph with payload", "graph")
 {
-  utils::SymmetricGraph<unsigned> graph;
+  utils::UnorientedGraph<unsigned> graph;
   REQUIRE(graph.empty_edges());
 
   graph.add_edge(0, 1, 100);

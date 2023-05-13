@@ -26,7 +26,7 @@ are_equal(Map first, Map second) -> bool
 
 TEST_CASE("utils::GraphAlgorithms: : has_circle", "graph")
 {
-  utils::SymmetricGraph<> graph;
+  utils::UnorientedGraph<> graph;
   graph.add_edge(0, 1);
   REQUIRE_FALSE(utils::graph_algorithms::has_circle(graph));
   graph.add_edge(1, 2);
@@ -37,7 +37,7 @@ TEST_CASE("utils::GraphAlgorithms: : has_circle", "graph")
 
 TEST_CASE("utils::GraphAlgorithms: : make_reflexive", "graph")
 {
-  utils::SymmetricGraph<> graph;
+  utils::UnorientedGraph<> graph;
   graph = utils::graph_algorithms::make_reflexive(graph);
   REQUIRE(graph.empty_vertices());
   REQUIRE(graph.empty_edges());
@@ -78,7 +78,7 @@ TEST_CASE("utils::GraphAlgorithms: : make_transitive", "graph")
 TEST_CASE("utils::GraphAlgorithms: : compute_strong_components - trivial",
           "graph")
 {
-  utils::SymmetricGraph<> graph({ 0, 1, 2, 3 }, {});
+  utils::UnorientedGraph<> graph({ 0, 1, 2, 3 }, {});
   REQUIRE(are_equal(graph.get_neighbours(0), {}));
   REQUIRE(are_equal(graph.get_neighbours(1), {}));
   REQUIRE(are_equal(graph.get_neighbours(2), {}));
@@ -92,14 +92,14 @@ TEST_CASE("utils::GraphAlgorithms: : compute_strong_components - trivial",
 
 TEST_CASE("utils::GraphAlgorithms: : compute_strong_components", "graph")
 {
-  utils::SymmetricGraph<> graph({ 0, 1, 2, 3 },
-                                {
-                                  {
-                                    { 0, 1 },
-                                    { 1, 2 },
-                                    { 2, 0 },
-                                  },
-                                });
+  utils::UnorientedGraph<> graph({ 0, 1, 2, 3 },
+                                 {
+                                   {
+                                     { 0, 1 },
+                                     { 1, 2 },
+                                     { 2, 0 },
+                                   },
+                                 });
   REQUIRE(are_equal(graph.get_neighbours(0), { 1, 2 }));
   REQUIRE(are_equal(graph.get_neighbours(1), { 0, 2 }));
   REQUIRE(are_equal(graph.get_neighbours(2), { 0, 1 }));
@@ -113,15 +113,21 @@ TEST_CASE("utils::GraphAlgorithms: : compute_strong_components", "graph")
 
 TEST_CASE("utils::GraphAlgorithms: : compute_path", "graph")
 {
-  utils::SymmetricGraph<> graph({ 0, 1, 2, 3 },
-                                {
-                                  {
-                                    { 0, 1 },
-                                    { 1, 2 },
-                                    { 2, 0 },
-                                  },
-                                });
+  utils::UnorientedGraph<> graph({ 0, 1, 2, 3 },
+                                 {
+                                   {
+                                     { 0, 0 },
+                                     { 0, 1 },
+                                     { 1, 2 },
+                                     { 2, 0 },
+                                   },
+                                 });
 
+  {
+    auto path = utils::graph_algorithms::compute_path(graph, 0, 0);
+    REQUIRE(not path.empty());
+    REQUIRE(path.size() == 1);
+  }
   {
     auto path = utils::graph_algorithms::compute_path(graph, 0, 1);
     REQUIRE(not path.empty());
@@ -137,8 +143,18 @@ TEST_CASE("utils::GraphAlgorithms: : compute_path", "graph")
   }
 
   {
+    auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 0);
+    REQUIRE(not path.empty());
+    REQUIRE(path.size() == 1);
+    REQUIRE(path.at(0) == 0);
+  }
+
+  {
     auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 2);
     REQUIRE(not path.empty());
+    REQUIRE(path.size() == 2);
+    REQUIRE(path.at(0) == 0);
+    REQUIRE(path.at(1) == 2);
   }
 
   {
@@ -150,15 +166,11 @@ TEST_CASE("utils::GraphAlgorithms: : compute_path", "graph")
     auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 1);
     REQUIRE(not path.empty());
     REQUIRE(path.size() == 2);
+    REQUIRE(path.at(0) == 0);
+    REQUIRE(path.at(1) == 1);
   }
   {
     auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 3);
     REQUIRE(path.empty());
-  }
-
-  {
-    auto path = utils::graph_algorithms::compute_shortest_path(graph, 0, 2);
-    REQUIRE(not path.empty());
-    REQUIRE(path.size() == 2);
   }
 }

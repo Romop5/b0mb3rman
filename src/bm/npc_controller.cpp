@@ -21,5 +21,5 @@ NPCController::update() -> void
     }
 
     const auto& npc_data = std::get<game_logic::NPCData>(entity.data_);
-    }
+  }
 }

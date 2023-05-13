@@ -123,6 +123,7 @@ compute_path(const G& graph, NodeId start, NodeId end) -> std::vector<NodeId>
       previous_vertex = previous_vertices.at(previous_vertex);
       result.push_back(previous_vertex);
     }
+    std::reverse(result.begin(), result.end());
     return result;
   };
 
@@ -168,6 +169,9 @@ auto
 compute_shortest_path(const G& graph, NodeId start, NodeId end)
   -> std::vector<NodeId>
 {
+  if (not graph.has_vertex(start) or not graph.has_vertex(end)) {
+    return {};
+  }
   /**
    * @brief Represents status of reachable node
    * @param first node
@@ -195,6 +199,8 @@ compute_shortest_path(const G& graph, NodeId start, NodeId end)
       previous_vertex = previous_vertices.at(previous_vertex);
       result.push_back(previous_vertex);
     }
+
+    std::reverse(result.begin(), result.end());
     return result;
   };
 
