@@ -47,6 +47,7 @@ Game::Game(render::interfaces::IRenderable& renderable, Settings settings)
   , event_distributor_{}
   , world_{ event_distributor_ }
   , game_controller_{ *this, event_distributor_, hud_manager_, world_ }
+  , npc_controller_{ event_distributor_, world_ }
 {
   load_level();
 }
@@ -67,6 +68,8 @@ Game::on_render(std::chrono::milliseconds delta) -> void
   event_distributor_.dispatch();
   world_.update(delta);
   world_.delete_marked_entities();
+
+  // npc_controller_.update();
 
   update_animations(delta);
 

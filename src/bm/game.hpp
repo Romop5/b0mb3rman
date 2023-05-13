@@ -15,6 +15,7 @@
 #include <bm/hud_manager.hpp>
 #include <bm/interfaces/game.hpp>
 #include <bm/level.hpp>
+#include <bm/npc_controller.hpp>
 #include <bm/world.hpp>
 
 namespace bm {
@@ -66,6 +67,9 @@ private:
 
   /// @brief Manages game dynamics (update of entites & map)
   GameController game_controller_;
+
+  /// @brief Manages NPC's logic
+  NPCController npc_controller_;
 
   /// @brief Owns current game map / multimedia resources
   std::unique_ptr<Level> level_;

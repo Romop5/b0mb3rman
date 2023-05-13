@@ -3,7 +3,8 @@
 
 using namespace bm;
 
-NPCController::NPCController(bm::World& world)
+NPCController::NPCController(EventDistributor& event_distributor,
+                             bm::World& world)
   : event_distributor_{ event_distributor_ }
   , world_{ world }
 {

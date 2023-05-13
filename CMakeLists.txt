@@ -59,6 +59,7 @@ add_library(b0mb3rman::engine ALIAS engine)
 add_library(game 
         src/bm/game.cpp
         src/bm/game_controller.cpp
+        src/bm/npc_controller.cpp
         src/bm/world.cpp
         src/bm/hud_manager.cpp
         src/bm/level.cpp
