@@ -50,10 +50,6 @@ NavigationMesh::update() -> void
       }
     }
   }
-
-  // Compute strong components from graph
-  cache_.strong_components =
-    utils::graph_algorithms::make_strong_components(cache_.graph);
 }
 
 auto

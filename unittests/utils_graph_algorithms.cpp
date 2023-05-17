@@ -75,6 +75,13 @@ TEST_CASE("utils::GraphAlgorithms: : make_transitive", "graph")
   REQUIRE(graph.has_edge(0, 0));
 }
 
+TEST_CASE("utils::GraphAlgorithms: : compute_strong_components - empty",
+          "graph")
+{
+  utils::UnorientedGraph<> graph;
+  graph = utils::graph_algorithms::make_strong_components(graph);
+}
+
 TEST_CASE("utils::GraphAlgorithms: : compute_strong_components - trivial",
           "graph")
 {
@@ -109,6 +116,22 @@ TEST_CASE("utils::GraphAlgorithms: : compute_strong_components", "graph")
   REQUIRE(are_equal(graph.get_neighbours(1), { 0, 1, 2 }));
   REQUIRE(are_equal(graph.get_neighbours(2), { 0, 1, 2 }));
   REQUIRE(are_equal(graph.get_neighbours(3), { 3 }));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : compute_strong_components_larger", "graph")
+{
+  utils::UnorientedGraph<> graph;
+  graph.add_edge(0, 1);
+  graph.add_edge(1, 0);
+  graph.add_edge(1, 2);
+  graph.add_edge(2, 1);
+  graph.add_edge(3, 4);
+  graph.add_edge(4, 3);
+  graph.add_edge(4, 5);
+  graph.add_edge(5, 6);
+  graph.add_edge(10, 11);
+
+  graph = utils::graph_algorithms::make_strong_components(graph);
 }
 
 TEST_CASE("utils::GraphAlgorithms: : compute_path", "graph")

@@ -31,6 +31,17 @@ GameController::handle(const event::GameStarted& event) -> void
     .set_max_speed(10.0f)
     .set_data(PlayerData{});
 
+  world_.create(Entity::Type::npc)
+    .set_collision_mask_bit(Entity::Type::player)
+    .set_collision_mask_bit(Entity::Type::bomb)
+    .set_collision_mask_bit(Entity::Type::crate)
+    .set_tileset("characters/farmer.json")
+    .set_tile(2)
+    .set_origin({ 5, 0 })
+    .set_size({ 0.7, 0.7 })
+    .set_max_speed(10.0f)
+    .set_data(NPCData{ NPCState::chasing_target, *world_.get_player_id() });
+
   if (auto level = game_.get_current_level()) {
     const auto boxes_layer_name = "boxes";
     if (not level->map_->has_layer(boxes_layer_name)) {
@@ -72,8 +83,8 @@ GameController::handle(const event::DeleteEntity& event) -> void
 auto
 GameController::handle(const event::PlayerMoved& event) -> void
 {
-  if (const auto player_id = world_.get_player_id()) {
-    auto& player = world_.get_entity(player_id.value());
+  if (world_.has_entity(event.actor_)) {
+    auto& player = world_.get_entity(event.actor_);
 
     if (player.flags_.test(Entity::Flags::frozen)) {
       return;

@@ -20,7 +20,7 @@ struct GameStarted
 struct DeleteEntity : public meta::EntityUpdate
 {};
 
-struct PlayerMoved
+struct PlayerMoved : public meta::EntityUpdate
 {
   bool should_accelerate;
   enum class MoveDirection
@@ -28,7 +28,8 @@ struct PlayerMoved
     up,
     down,
     left,
-    right
+    right,
+    count
   } direction_;
 };
 

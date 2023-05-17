@@ -58,7 +58,8 @@ enum class NPCState
 struct NPCData
 {
   NPCState goal;
-  glm::vec2 target_position;
+  unsigned target_id;
+  unsigned ticks_to_change{ 0 };
 };
 
 } // namespace bm::game_logic

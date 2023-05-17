@@ -82,20 +82,25 @@ template<typename G>
 auto
 make_transitive(const G& graph) -> G
 {
-  auto result = graph;
+  using NodeId = typename G::NodeId;
 
-  bool was_updated = false;
+  auto result = graph;
+  std::vector<std::pair<NodeId, NodeId>> new_edges;
   do {
-    was_updated = false;
+    for (const auto& edge : new_edges) {
+      result.add_edge(edge.first, edge.second);
+    }
+    new_edges.clear();
+
     for (const auto& [edge, _] : result.get_edges()) {
-      for (const auto& transitive : graph.get_neighbours(edge.second)) {
+      for (const auto transitive : graph.get_neighbours(edge.second)) {
         if (not result.has_edge(edge.first, transitive)) {
-          result.add_edge(edge.first, transitive);
-          was_updated = true;
+          new_edges.push_back({ edge.first, transitive });
         }
       }
     }
-  } while (was_updated);
+
+  } while (not new_edges.empty());
   return result;
 }
 

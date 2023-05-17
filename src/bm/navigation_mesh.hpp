@@ -30,8 +30,6 @@ private:
     utils::AABB boundary;
     /// @brief Defines topology of unobstructed tiles in game
     utils::UnorientedGraph<> graph;
-    /// @brief Serves for speeding up rejection of path existance
-    utils::UnorientedGraph<> strong_components;
   } cache_;
 
   bm::interfaces::ICollisionWorld& world_;

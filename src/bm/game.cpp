@@ -69,7 +69,7 @@ Game::on_render(std::chrono::milliseconds delta) -> void
   world_.update(delta);
   world_.delete_marked_entities();
 
-  // npc_controller_.update();
+  npc_controller_.update();
 
   update_animations(delta);
 
@@ -161,8 +161,8 @@ Game::on_key_callback(int key, int scancode, int action, int mods) -> void
   }();
 
   if (movement_type and action != GLFW_REPEAT) {
-    event_distributor_.enqueue_event(
-      bm::event::PlayerMoved{ action == GLFW_PRESS, movement_type.value() });
+    event_distributor_.enqueue_event(bm::event::PlayerMoved{
+      *world_.get_player_id(), action == GLFW_PRESS, movement_type.value() });
   }
 
   if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
