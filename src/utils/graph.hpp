@@ -162,11 +162,22 @@ Graph<EdgeStorage, Orientation>::get_neighbours(NodeId vertex) const
 {
   std::unordered_set<NodeId> result;
   for (auto& [edge, _] : edges_) {
-    if (edge.first != vertex and edge.second != vertex) {
+    const auto pair = transform_pair(edge.first, edge.second);
+
+    if (pair.first != vertex and pair.second != vertex) {
       continue;
     }
-    const auto neighbour = edge.first != vertex ? edge.first : edge.second;
-    result.insert(neighbour);
+
+    if constexpr (Orientation == GraphOrientation::oriented) {
+      if (pair.first != vertex) {
+        continue;
+      }
+      const auto neighbour = pair.second;
+      result.insert(neighbour);
+    } else {
+      const auto neighbour = pair.first == vertex ? pair.second : pair.first;
+      result.insert(neighbour);
+    }
   }
   return result;
 }

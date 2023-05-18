@@ -197,3 +197,188 @@ TEST_CASE("utils::GraphAlgorithms: : compute_path", "graph")
     REQUIRE(path.empty());
   }
 }
+
+TEST_CASE("utils::GraphAlgorithms: : strong components representative", "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_edge(0, 1);
+  const auto reflexive_symmetric_closure =
+    utils::graph_algorithms::make_reflexive(
+      utils::graph_algorithms::make_symmetric(graph));
+
+  const auto representatives =
+    utils::graph_algorithms::make_representatives_of_strong_components(
+      reflexive_symmetric_closure);
+
+  REQUIRE(representatives.size() == 1);
+  REQUIRE((representatives.at(0) == 0 or representatives.at(0) == 1));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : strong components representative 2",
+          "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_vertex(0);
+  graph.add_vertex(1);
+
+  const auto reflexive_symmetric_closure =
+    utils::graph_algorithms::make_reflexive(
+      utils::graph_algorithms::make_symmetric(graph));
+
+  const auto representatives =
+    utils::graph_algorithms::make_representatives_of_strong_components(
+      reflexive_symmetric_closure);
+
+  REQUIRE(representatives.size() == 2);
+  REQUIRE((representatives.at(0) == 0 or representatives.at(0) == 1));
+  REQUIRE((representatives.at(1) == 0 or representatives.at(1) == 1));
+  REQUIRE(representatives.at(0) != representatives.at(1));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : strong components representative 3",
+          "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_vertex(0);
+  graph.add_vertex(1);
+  graph.add_vertex(2);
+  graph.add_edge(0, 1);
+
+  const auto reflexive_symmetric_closure =
+    utils::graph_algorithms::make_reflexive(
+      utils::graph_algorithms::make_symmetric(graph));
+
+  const auto representatives =
+    utils::graph_algorithms::make_representatives_of_strong_components(
+      reflexive_symmetric_closure);
+
+  REQUIRE(representatives.size() == 2);
+  REQUIRE((representatives.at(0) == 0 or representatives.at(0) == 1 or
+           representatives.at(0) == 2));
+  REQUIRE((representatives.at(1) == 0 or representatives.at(1) == 1 or
+           representatives.at(1) == 2));
+  REQUIRE(representatives.at(0) != representatives.at(1));
+}
+
+TEST_CASE("utils::GraphAlgorithms: reachable nodes", "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_edge(0, 1);
+  graph.add_edge(1, 2);
+  graph.add_vertex(3);
+
+  {
+    const auto nodes = utils::graph_algorithms::reachable_nodes(graph, 0);
+    REQUIRE(nodes.count(0) > 0);
+    REQUIRE(nodes.count(1) > 0);
+    REQUIRE(nodes.count(2) > 0);
+    REQUIRE(nodes.count(3) == 0);
+  }
+
+  {
+    const auto nodes = utils::graph_algorithms::reachable_nodes(graph, 1);
+    REQUIRE(nodes.count(0) == 0);
+    REQUIRE(nodes.count(1) > 0);
+    REQUIRE(nodes.count(2) > 0);
+    REQUIRE(nodes.count(3) == 0);
+  }
+
+  {
+    const auto nodes = utils::graph_algorithms::reachable_nodes(graph, 2);
+    REQUIRE(nodes.count(0) == 0);
+    REQUIRE(nodes.count(1) == 0);
+    REQUIRE(nodes.count(2) > 0);
+    REQUIRE(nodes.count(3) == 0);
+  }
+
+  {
+    const auto nodes = utils::graph_algorithms::reachable_nodes(graph, 3);
+    REQUIRE(nodes.count(0) == 0);
+    REQUIRE(nodes.count(1) == 0);
+    REQUIRE(nodes.count(2) == 0);
+    REQUIRE(nodes.count(3) > 0);
+  }
+}
+
+TEST_CASE("utils::GraphAlgorithms: : linearize_set empty", "graph")
+{
+  utils::OrientedGraph<> graph;
+
+  const auto order = utils::graph_algorithms::linearly_order_nodes(graph);
+}
+
+TEST_CASE("utils::GraphAlgorithms: : linearize_set", "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_edge(0, 1);
+
+  const auto order = utils::graph_algorithms::linearly_order_nodes(graph);
+  REQUIRE(order.at(0) == 0);
+  REQUIRE(order.at(1) == 1);
+}
+
+TEST_CASE("utils::GraphAlgorithms: : linearize_set detect cycle", "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_edge(0, 1);
+  graph.add_edge(1, 0);
+
+  CHECK_THROWS(utils::graph_algorithms::linearly_order_nodes(graph));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : linearize_set detect cycle advanced",
+          "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_edge(0, 1);
+  graph.add_edge(1, 10);
+  graph.add_edge(10, 2);
+  graph.add_edge(2, 1);
+
+  CHECK_THROWS(utils::graph_algorithms::linearly_order_nodes(graph));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : linearize_set detect cycle (unoriented)",
+          "graph")
+{
+  utils::UnorientedGraph<> graph;
+  graph.add_edge(0, 1);
+
+  CHECK_THROWS(utils::graph_algorithms::linearly_order_nodes(graph));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : linearize_set ok", "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_vertex(0);
+  graph.add_vertex(1);
+
+  const auto order = utils::graph_algorithms::linearly_order_nodes(graph);
+  REQUIRE((order.at(0) == 0 or order.at(0) == 1));
+  REQUIRE((order.at(1) == 0 or order.at(1) == 1));
+  REQUIRE(order.at(0) != order.at(1));
+}
+
+TEST_CASE("utils::GraphAlgorithms: : linearize_set first 3", "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_edge(0, 1);
+  graph.add_edge(1, 2);
+
+  const auto order = utils::graph_algorithms::linearly_order_nodes(graph);
+  REQUIRE(order.at(0) == 0);
+  REQUIRE(order.at(1) == 1);
+  REQUIRE(order.at(2) == 2);
+}
+
+TEST_CASE("utils::GraphAlgorithms: : linearize_set first 3 reversed", "graph")
+{
+  utils::OrientedGraph<> graph;
+  graph.add_edge(2, 1);
+  graph.add_edge(1, 0);
+
+  const auto order = utils::graph_algorithms::linearly_order_nodes(graph);
+  REQUIRE(order.at(2) == 0);
+  REQUIRE(order.at(1) == 1);
+  REQUIRE(order.at(0) == 2);
+}
