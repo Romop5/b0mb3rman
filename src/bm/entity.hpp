@@ -37,7 +37,8 @@ public:
     marked_for_destruction = 0,
     unbounded = 1,
     frozen = 2,
-    fireproof = 3,
+    animated_movement = 3,
+    fireproof = 4,
     last_flag
   };
   using FlagsBitset = std::bitset<Flags::last_flag>;
@@ -142,6 +143,9 @@ public:
     {
       return moving_left or moving_right or moving_down or moving_up;
     }
+
+    std::optional<glm::vec2> animation_next_position; // animated movement-only:
+                                                      // next position to arrive
   } controller_;
 
   // Visual component

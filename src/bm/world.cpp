@@ -66,6 +66,11 @@ World::update(std::chrono::milliseconds delta) -> void
   /* Update acceleration and speed */
   for (auto& [id, entity] : entities_) {
     const auto& controller = entity.controller_;
+
+    if (entity.flags_.test(Entity::Flags::animated_movement)) {
+      continue;
+    }
+
     entity.acceleration_ =
       glm::vec2(controller.moving_right) * glm::vec2(1.0, 0.0) +
       glm::vec2(controller.moving_left) * glm::vec2(-1.0, 0.0) +
@@ -88,7 +93,8 @@ World::update(std::chrono::milliseconds delta) -> void
 
   /* Update positions */
   for (auto& [id, entity] : entities_) {
-    if (entity.flags_.test(Entity::Flags::frozen)) {
+    if (entity.flags_.test(Entity::Flags::frozen) or
+        entity.flags_.test(Entity::Flags::animated_movement)) {
       continue;
     }
 
@@ -168,6 +174,35 @@ World::update(std::chrono::milliseconds delta) -> void
       glm::vec2(-std::min(elapsed_seconds * attenuation, 1.0f));
   }
 
+  /* Animated-only: update position (constant speed movement)*/
+  for (auto& [id, entity] : entities_) {
+    auto& controller = entity.controller_;
+
+    if (not entity.flags_.test(Entity::Flags::animated_movement) or
+        not controller.animation_next_position) {
+      continue;
+    }
+
+    const auto next_position = *controller.animation_next_position;
+    const auto remaining_difference = next_position - entity.aabb_.origin_;
+    if (glm::length(remaining_difference) < 1e-3) {
+      entity.aabb_.origin_ = next_position;
+      controller.animation_next_position.reset();
+      continue;
+    }
+    const auto direction = glm::normalize(remaining_difference);
+
+    const auto velocity = entity.max_speed_ * direction;
+    const auto position_delta = elapsed_seconds * velocity;
+
+    // missed, clamped to next_position
+    if (glm::length(position_delta) > glm::length(remaining_difference)) {
+      entity.aabb_.origin_ = next_position;
+      controller.animation_next_position.reset();
+    } else {
+      entity.aabb_.origin_ += position_delta;
+    }
+  }
   detect_collisions();
 }
 auto
@@ -240,8 +275,13 @@ World::has_static_collision(glm::vec2 pos) -> bool
   if (is_out_of_bounds(floor_pos)) {
     return false;
   }
-  return static_collisions_.at({ static_cast<unsigned int>(floor_pos.x),
-                                 static_cast<unsigned int>(floor_pos.y) });
+  try {
+    return static_collisions_.at({ static_cast<unsigned int>(floor_pos.x),
+                                   static_cast<unsigned int>(floor_pos.y) });
+  } catch (std::exception& e) {
+    spdlog::error("has_static_collision: unexpected exception: {}", e.what());
+    return false;
+  }
 }
 
 auto

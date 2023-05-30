@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <glm/glm.hpp>
 
 namespace bm {
@@ -60,6 +62,7 @@ struct NPCData
   NPCState goal;
   unsigned target_id;
   unsigned ticks_to_change{ 0 };
+  std::vector<glm::vec2> trajectory;
 };
 
 } // namespace bm::game_logic

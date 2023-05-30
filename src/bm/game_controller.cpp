@@ -32,6 +32,7 @@ GameController::handle(const event::GameStarted& event) -> void
     .set_data(PlayerData{});
 
   world_.create(Entity::Type::npc)
+    .set_flags(Entity::Flags::animated_movement)
     .set_collision_mask_bit(Entity::Type::player)
     .set_collision_mask_bit(Entity::Type::bomb)
     .set_collision_mask_bit(Entity::Type::crate)
@@ -39,7 +40,7 @@ GameController::handle(const event::GameStarted& event) -> void
     .set_tile(2)
     .set_origin({ 5, 0 })
     .set_size({ 0.7, 0.7 })
-    .set_max_speed(10.0f)
+    .set_max_speed(5.0f)
     .set_data(NPCData{ NPCState::chasing_target, *world_.get_player_id() });
 
   if (auto level = game_.get_current_level()) {

@@ -35,3 +35,51 @@ TEST_CASE("utils::Occupancy: : basic", "occupancy_map")
     }
   });
 }
+
+TEST_CASE("utils::Occupancy: : index", "occupancy_map")
+{
+  using Index2D = std::array<unsigned, 2>;
+
+  REQUIRE(utils::compute_nd_index<Index2D, Index2D>(0, { 1, 1 }) ==
+          Index2D{ 0, 0 });
+
+  REQUIRE(utils::compute_nd_index<Index2D, Index2D>(0, { 2, 2 }) ==
+          Index2D{ 0, 0 });
+  REQUIRE(utils::compute_nd_index<Index2D, Index2D>(1, { 2, 2 }) ==
+          Index2D{ 1, 0 });
+  REQUIRE(utils::compute_nd_index<Index2D, Index2D>(2, { 2, 2 }) ==
+          Index2D{ 0, 1 });
+  REQUIRE(utils::compute_nd_index<Index2D, Index2D>(3, { 2, 2 }) ==
+          Index2D{ 1, 1 });
+
+  REQUIRE(utils::compute_nd_index<Index2D, Index2D>(0, { 3, 3 }) ==
+          Index2D{ 0, 0 });
+  REQUIRE(utils::compute_nd_index<Index2D, Index2D>(1, { 3, 3 }) ==
+          Index2D{ 1, 0 });
+  REQUIRE(utils::compute_nd_index<Index2D, Index2D>(2, { 3, 3 }) ==
+          Index2D{ 2, 0 });
+  REQUIRE(utils::compute_nd_index<Index2D, Index2D>(3, { 3, 3 }) ==
+          Index2D{ 0, 1 });
+}
+
+TEST_CASE("utils::Occupancy: : index bijection1D", "occupancy_map")
+{
+  using Index1D = std::array<unsigned, 1>;
+  const auto dims = Index1D{ 7 };
+
+  for (std::size_t i = 0; i < 7; i++) {
+    REQUIRE(utils::compute_index<Index1D, Index1D>(
+              utils::compute_nd_index<Index1D, Index1D>(i, dims), dims) == i);
+  }
+}
+
+TEST_CASE("utils::Occupancy: : index bijection2D", "occupancy_map")
+{
+  using Index2D = std::array<unsigned, 2>;
+  const auto dims = Index2D{ 7, 3 };
+
+  for (std::size_t i = 0; i < 7 * 3; i++) {
+    REQUIRE(utils::compute_index<Index2D, Index2D>(
+              utils::compute_nd_index<Index2D, Index2D>(i, dims), dims) == i);
+  }
+}

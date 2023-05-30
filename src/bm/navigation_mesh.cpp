@@ -23,19 +23,26 @@ NavigationMesh::update() -> void
     { static_cast<unsigned>(size.x), static_cast<unsigned>(size.y) }, false);
 
   // Construct graph from non-colliding vertices
-  occupancy_map.for_each([&](const auto index, auto is_occupied) {
-    is_occupied =
-      world_.has_static_collision(glm::vec2(index.at(0), index.at(1)));
+  occupancy_map.update(
+    [&](const auto index,
+        [[maybe_unused]] const auto is_index_occupied) -> bool {
+      const auto position = glm::vec2(index.at(0), index.at(1));
+      const auto should_be_occupied = world_.has_static_collision(position);
 
-    if (not is_occupied) {
-      cache_.graph.add_vertex(occupancy_map.transform_index_to_offset(index));
-    }
-  });
+      if (not should_be_occupied) {
+        cache_.graph.add_vertex(occupancy_map.transform_index_to_offset(index));
+      }
+
+      return should_be_occupied;
+    });
 
   // Connect neighbours in the graph
   for (size_t col = 0; col < size.x - 1; col++) {
     for (size_t row = 0; row < size.y - 1; row++) {
       const auto node_id = compute_node_id({ col, row });
+      if (not cache_.graph.has_vertex(node_id)) {
+        continue;
+      }
 
       std::vector<utils::UnorientedGraph<>::NodeId> possible_neighbours = {
         compute_node_id({ col, row }),
@@ -43,7 +50,7 @@ NavigationMesh::update() -> void
         compute_node_id({ col, row + 1 })
       };
 
-      for (const auto& neighbour_id : possible_neighbours) {
+      for (const auto neighbour_id : possible_neighbours) {
         if (cache_.graph.has_vertex(neighbour_id)) {
           cache_.graph.add_edge(node_id, neighbour_id);
         }

@@ -198,6 +198,32 @@ TEST_CASE("utils::GraphAlgorithms: : compute_path", "graph")
   }
 }
 
+TEST_CASE("utils::GraphAlgorithms: : compute_path: empty ", "graph")
+{
+  utils::UnorientedGraph<> graph({ 0, 1, 2, 3 },
+                                 {
+                                   {
+                                     { 0, 0 },
+                                     { 0, 1 },
+                                     { 1, 2 },
+                                     { 2, 0 },
+                                   },
+                                 });
+
+  {
+    auto path = utils::graph_algorithms::compute_path(graph, 4, 5);
+    REQUIRE(path.empty());
+  }
+  {
+    auto path = utils::graph_algorithms::compute_path(graph, 0, 5);
+    REQUIRE(path.empty());
+  }
+  {
+    auto path = utils::graph_algorithms::compute_path(graph, 30, 5);
+    REQUIRE(path.empty());
+  }
+}
+
 TEST_CASE("utils::GraphAlgorithms: : strong components representative", "graph")
 {
   utils::OrientedGraph<> graph;

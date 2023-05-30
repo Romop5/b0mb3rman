@@ -84,10 +84,18 @@ public:
   auto end() { return cells_.end(); }
 
   template<typename F>
-  auto for_each(F functor)
+  auto for_each(F functor) const -> void
   {
     for (size_t i = 0; i < cells_.size(); i++) {
       functor(compute_nd_index<Index>(i, dims_), cells_.at(i));
+    }
+  }
+
+  template<typename F>
+  auto update(F functor) -> void
+  {
+    for (size_t i = 0; i < cells_.size(); i++) {
+      cells_[i] = functor(compute_nd_index<Index>(i, dims_), cells_.at(i));
     }
   }
 

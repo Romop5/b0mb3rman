@@ -31,12 +31,12 @@ NPCController::update() -> void
 
     auto& npc_data = std::get<game_logic::NPCData>(entity.data_);
 
-    if (npc_data.ticks_to_change) {
+    /*if (npc_data.ticks_to_change) {
       npc_data.ticks_to_change--;
       continue;
     }
-    npc_data.ticks_to_change = 1;
-
+    npc_data.ticks_to_change = 10;
+*/
     spdlog::trace("update(): entity '{}'", id);
 
     using namespace bm::game_logic;
@@ -71,7 +71,10 @@ NPCController::update_random_movement(bm::Entity& entity) -> void
 auto
 NPCController::update_chasing_target(bm::Entity& entity) -> void
 {
-  entity.controller_ = {};
+  // animation movement pending
+  if (entity.controller_.animation_next_position) {
+    return;
+  }
 
   auto& npc_data = std::get<game_logic::NPCData>(entity.data_);
 
@@ -81,27 +84,44 @@ NPCController::update_chasing_target(bm::Entity& entity) -> void
 
   auto& target = world_.get_entity(npc_data.target_id);
 
-  const auto path =
-    navigation_mesh_.compute_path(entity.aabb_.origin_, target.aabb_.origin_);
-
-  if (path.empty() or path.size() == 1) {
+  auto& path = npc_data.trajectory;
+  if (path.empty()) {
+    try {
+      path = navigation_mesh_.compute_path(entity.aabb_.origin_,
+                                           target.aabb_.origin_);
+      // path.push_back(target.aabb_.origin_);
+    } catch (std::exception& e) {
+      path = {};
+    }
+  }
+  if (path.empty()) {
     return;
   }
 
-  const auto current_position = entity.aabb_.origin_;
-  const auto next_position = path.at(1);
-  const auto difference = next_position - current_position;
+  auto next_position = path.at(0);
+  entity.controller_.animation_next_position = next_position;
+  path.erase(path.begin());
 
-  auto direction = [this](glm::vec2 difference) {
-    if (abs(difference.x) > 1e-6) {
+  /*auto direction = [this, epsilon](glm::vec2 difference)
+    -> std::optional<bm::event::PlayerMoved::MoveDirection> {
+    const auto absolute_delta = glm::abs(difference);
+
+    if (absolute_delta.x > epsilon) {
       return difference.x > 0 ? bm::event::PlayerMoved::MoveDirection::right
                               : bm::event::PlayerMoved::MoveDirection::left;
-    } else if (abs(difference.y) > 1e-6) {
+    } else if (absolute_delta.y > epsilon) {
       return difference.y > 0 ? bm::event::PlayerMoved::MoveDirection::down
                               : bm::event::PlayerMoved::MoveDirection::up;
     }
+    return {};
   }(difference);
 
-  event_distributor_.enqueue_event(
-    bm::event::PlayerMoved{ entity.get_id(), true, direction });
+  if (direction) {
+    event_distributor_.enqueue_event(
+      bm::event::PlayerMoved{ entity.get_id(), true, direction.value() });
+  } else {
+    event_distributor_.enqueue_event(bm::event::PlayerMoved{
+      entity.get_id(), false, bm::event::PlayerMoved::MoveDirection::down });
+  }
+  */
 }
