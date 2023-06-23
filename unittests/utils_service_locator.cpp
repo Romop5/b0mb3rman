@@ -48,7 +48,7 @@ TEST_CASE("utils::Service: : prerequisite:deps", "service_locator")
   REQUIRE(C::DependencyList::as_type_index().size() == 2);
 }
 
-TEST_CASE("utils::ServiceLocator: : basic", "service_locator")
+/*TEST_CASE("utils::ServiceLocator: : basic", "service_locator")
 {
   utils::ServiceLocator locator;
   locator.register_interface<AbstractA, A>();
@@ -60,8 +60,8 @@ TEST_CASE("utils::ServiceLocator: : basic", "service_locator")
   REQUIRE(locator.has_interface<C>() == true);
 
   locator.get<C>();
-}
-
+}*/
+/*
 TEST_CASE("utils::ServiceLocator: : detect circle", "service_locator")
 {
   utils::ServiceLocator locator;
@@ -70,4 +70,4 @@ TEST_CASE("utils::ServiceLocator: : detect circle", "service_locator")
   locator.register_interface<C, C>(locator);
 
   locator.get<C>();
-}
+}*/

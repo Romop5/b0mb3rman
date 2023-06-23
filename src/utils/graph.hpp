@@ -39,11 +39,13 @@ enum GraphOrientation
  * @note implemented via hash map
  *
  */
-template<typename EdgeStorage = std::monostate,
-         unsigned Orientation = GraphOrientation::unoriented>
+template<typename _EdgeStorage = std::monostate,
+         unsigned _Orientation = GraphOrientation::unoriented>
 class Graph
 {
 public:
+  using EdgeStorage = _EdgeStorage;
+  static constexpr auto Orientation = _Orientation;
   using NodeId = unsigned;
   using Edge = std::pair<NodeId, NodeId>;
 
