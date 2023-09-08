@@ -102,6 +102,14 @@ public:
     return *this;
   }
 
+  auto get_current_animation_id() const -> std::optional<unsigned int>
+  {
+    if (tile_.animation_) {
+      return tile_.animation_->id;
+    }
+    return {};
+  }
+
   auto set_data(EntityData data) -> Entity&
   {
     data_ = data;

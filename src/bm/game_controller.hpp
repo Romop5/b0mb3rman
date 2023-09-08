@@ -35,6 +35,7 @@ public:
     event_distributor_.registry_listener<event::GameStarted,
                                          event::DeleteEntity,
                                          event::PlayerMoved,
+                                         event::NPCMoved,
                                          event::PlayerDied,
                                          event::ParticleDestroyed,
                                          event::CrateDestroyed,
@@ -49,6 +50,7 @@ public:
   auto handle(const event::GameStarted& event) -> void;
   auto handle(const event::DeleteEntity& event) -> void;
   auto handle(const event::PlayerMoved& event) -> void;
+  auto handle(const event::NPCMoved& event) -> void;
   auto handle(const event::PlayerDied& event) -> void;
   auto handle(const event::ParticleDestroyed& event) -> void;
   auto handle(const event::CrateDestroyed& event) -> void;
@@ -72,6 +74,10 @@ protected:
                       std::chrono::milliseconds duration,
                       const std::string tileset = "fire.json",
                       unsigned animation_id = 0) -> Entity&;
+
+  auto set_entity_move_animation(Entity& entity,
+                                 event::PlayerMoved::MoveDirection,
+                                 bool should_accelerate) -> void;
 
   auto compute_random_pickup_type() -> bm::game_logic::PickupType;
 

@@ -185,22 +185,32 @@ World::update(std::chrono::milliseconds delta) -> void
 
     const auto next_position = *controller.animation_next_position;
     const auto remaining_difference = next_position - entity.aabb_.origin_;
-    if (glm::length(remaining_difference) < 1e-3) {
-      entity.aabb_.origin_ = next_position;
-      controller.animation_next_position.reset();
-      continue;
-    }
     const auto direction = glm::normalize(remaining_difference);
+    const auto should_end_movement = glm::length(remaining_difference) < 1e-3;
 
     const auto velocity = entity.max_speed_ * direction;
     const auto position_delta = elapsed_seconds * velocity;
+
+    if (should_end_movement) {
+      entity.aabb_.origin_ = next_position;
+      controller.animation_next_position.reset();
+
+      continue;
+    }
 
     // missed, clamped to next_position
     if (glm::length(position_delta) > glm::length(remaining_difference)) {
       entity.aabb_.origin_ = next_position;
       controller.animation_next_position.reset();
+
+      event_distributor_.enqueue_event(
+        bm::event::NPCMoved{ id, false, direction });
+
     } else {
       entity.aabb_.origin_ += position_delta;
+
+      event_distributor_.enqueue_event(
+        bm::event::NPCMoved{ id, true, direction });
     }
   }
   detect_collisions();

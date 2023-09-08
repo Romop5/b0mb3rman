@@ -25,12 +25,18 @@ struct PlayerMoved : public meta::EntityUpdate
   bool should_accelerate;
   enum class MoveDirection
   {
-    up,
-    down,
-    left,
-    right,
+    up = 0,
+    right = 1,
+    down = 2,
+    left = 3,
     count
   } direction_;
+};
+
+struct NPCMoved : public meta::EntityUpdate
+{
+  bool should_accelerate;
+  glm::vec2 direction;
 };
 
 struct PlayerDied : public meta::EntityUpdate

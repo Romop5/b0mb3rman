@@ -91,45 +91,27 @@ GameController::handle(const event::PlayerMoved& event) -> void
       return;
     }
 
-    auto update_visual = [&](unsigned int movement_category) {
-      if (event.should_accelerate) {
-        player.set_animation(movement_category);
-      } else if (not player.controller_.any()) {
-        player.set_tile(movement_category);
-      }
-    };
-    switch (event.direction_) {
-      case event::PlayerMoved::MoveDirection::left:
-        spdlog::trace("Player moved {}, should_accelerate{}",
-                      "left",
-                      event.should_accelerate);
-        player.controller_.moving_left = event.should_accelerate;
-        update_visual(3);
-        break;
-      case event::PlayerMoved::MoveDirection::right:
-        spdlog::trace("Player moved {}, should_accelerate{}",
-                      "right",
-                      event.should_accelerate);
-        player.controller_.moving_right = event.should_accelerate;
-        update_visual(1);
-        break;
-      case event::PlayerMoved::MoveDirection::up:
-        spdlog::trace("Player moved {}, should_accelerate{}",
-                      "up",
-                      event.should_accelerate);
-        player.controller_.moving_up = event.should_accelerate;
-        update_visual(0);
-        break;
-      case event::PlayerMoved::MoveDirection::down:
-        spdlog::trace("Player moved {}, should_accelerate{}",
-                      "down",
-                      event.should_accelerate);
-        player.controller_.moving_down = event.should_accelerate;
-        update_visual(2);
-        break;
-    }
+    set_entity_move_animation(
+      player, event.direction_, event.should_accelerate);
+
   } else {
     spdlog::debug("Missing player entity ingame");
+  }
+}
+
+auto
+GameController::handle(const event::NPCMoved& event) -> void
+{
+  if (world_.has_entity(event.actor_)) {
+    auto& npc = world_.get_entity(event.actor_);
+
+    const auto moveType =
+      event.direction.x == 0
+        ? (event.direction.y > 0 ? event::PlayerMoved::MoveDirection::down
+                                 : event::PlayerMoved::MoveDirection::up)
+        : (event.direction.x < 0 ? event::PlayerMoved::MoveDirection::left
+                                 : event::PlayerMoved::MoveDirection::right);
+    set_entity_move_animation(npc, moveType, event.should_accelerate);
   }
 }
 
@@ -483,6 +465,48 @@ GameController::spawn_particle(glm::vec2 position,
                 position.y,
                 duration.count());
   return particle;
+}
+
+auto
+GameController::set_entity_move_animation(
+  Entity& entity,
+  event::PlayerMoved::MoveDirection moveType,
+  bool should_accelerate) -> void
+{
+  auto update_visual = [&](unsigned int movement_category) {
+    if (should_accelerate) {
+      const auto optional_anim_id = entity.get_current_animation_id();
+      if (optional_anim_id && optional_anim_id != movement_category) {
+        entity.set_animation(movement_category);
+      }
+    } else if (not entity.controller_.any()) {
+      entity.set_tile(movement_category);
+    }
+  };
+
+  std::array<std::string,
+             static_cast<unsigned>(event::PlayerMoved::MoveDirection::count)>
+    directionString = {
+      "up",
+      "down",
+      "left",
+      "right",
+    };
+
+  std::array<bool*, 4> moving_direction_flag = {
+    &entity.controller_.moving_up,
+    &entity.controller_.moving_right,
+    &entity.controller_.moving_down,
+    &entity.controller_.moving_left,
+  };
+
+  spdlog::trace("NPC moved {}, should_accelerate{}",
+                directionString[static_cast<unsigned>(moveType)],
+                should_accelerate);
+
+  *moving_direction_flag[static_cast<unsigned>(moveType)] = should_accelerate;
+
+  update_visual(static_cast<unsigned int>(moveType));
 }
 
 auto
